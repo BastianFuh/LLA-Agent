@@ -1,26 +1,42 @@
 from llama_index.core.workflow import Context
-from workflow.events import LLM_Progress_Event
+from workflow.events import LLMProgressEvent
 
-from workflow.llm_workflow import LLM_FLow
-from workflow.events import LLM_StartEvent
+from workflow.llm_workflow import ChatBotWorkfLow
+from workflow.events import ChatBotStartEvent, AudioStreamEvent
+
+from util import const
+
+import gradio as gr
 
 
 async def chat(message, history):
-    workflow = LLM_FLow(timeout=60)
+    workflow = ChatBotWorkfLow(timeout=60)
     is_stream = True
 
     ctx = Context(workflow)
-    await ctx.set("is_stream", is_stream)
+    await ctx.set(const.IS_STREAM, is_stream)
+    await ctx.set(const.AUDIO_OUTPUT, True)
     response = ""
 
-    start_event = LLM_StartEvent(message=message, history=history)
+    start_event = ChatBotStartEvent(message=message, history=history)
 
-    if is_stream:
-        handler = workflow.run(start_event=start_event, ctx=ctx)
+    handler = workflow.run(start_event=start_event, ctx=ctx)
 
-        async for event in handler.stream_events():
-            if isinstance(event, LLM_Progress_Event):
-                response += event.response_delta
-                yield response, None
-    else:
-        yield await workflow.run(start_event=start_event, ctx=ctx), None
+    async for event in handler.stream_events():
+        if isinstance(event, LLMProgressEvent):
+            response += event.response
+            yield response
+
+        if isinstance(event, AudioStreamEvent):
+            # You can't return None here
+            yield [
+                response,
+                gr.Audio(
+                    event.audio_chunk,
+                    type="numpy",
+                    streaming=True,
+                    autoplay=True,
+                    interactive=False,
+                ),
+            ]
+            # yield response, event.audio_chunk
