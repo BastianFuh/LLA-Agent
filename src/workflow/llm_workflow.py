@@ -5,10 +5,10 @@ from llama_index.core.workflow import (
     Context,
     step,
 )
-from llama_index.llms.openai import OpenAI
+from llama_index.llms.openrouter import OpenRouter
 from llama_index.core.base.llms.types import ChatMessage
 
-from workflow.events import LLM_Progress_Event
+from workflow.events import LLM_Progress_Event, LLM_StartEvent, LLMStopEvent
 
 
 def build_message(message: str, history: list[dict]):
@@ -24,10 +24,10 @@ def build_message(message: str, history: list[dict]):
 
 
 class LLM_FLow(Workflow):
-    llm = OpenAI(model="gpt-4o-mini")
+    llm = OpenRouter(model="deepseek/deepseek-chat-v3-0324:free")
 
     @step
-    async def start(self, ctx: Context, ev: StartEvent) -> StopEvent:
+    async def start(self, ctx: Context, ev: LLM_StartEvent) -> LLMStopEvent:
         is_stream = await ctx.get("is_stream", default=False)
 
         if is_stream:
@@ -38,8 +38,8 @@ class LLM_FLow(Workflow):
                     LLM_Progress_Event(response_delta=response.delta)
                 )
 
-            return StopEvent(result="")
+            return LLMStopEvent(result="")
         else:
             response = await self.llm.achat(build_message(ev.message, ev.history))
 
-            return StopEvent(result=response.message.content)
+            return LLMStopEvent(result=response.message.content)
