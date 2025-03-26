@@ -9,6 +9,10 @@ from llama_index.core.workflow import (
 from llama_index.llms.openrouter import OpenRouter
 from llama_index.core.base.llms.types import ChatMessage
 
+from llama_index.core.agent import ReActAgent
+
+from llama_index.tools.tavily_research import TavilyToolSpec
+
 from openai import AsyncOpenAI
 
 from workflow.events import (
@@ -33,14 +37,23 @@ def build_message(message: str, history: list[dict]):
             ChatMessage(role=element["role"], content=element["content"])
         )
 
-    llm_message.append(ChatMessage(role="user", content=message))
+    if message is not None:
+        llm_message.append(ChatMessage(role="user", content=message))
 
-    return llm_message
+    return llm_message if len(llm_message) > 0 else None
+
+
+def get_llms_tools() -> list:
+    tools = list()
+
+    # API Keys are provided via the environment but because the tools do not have
+    # default values "None" needs to be passed to them
+    tools.extend(TavilyToolSpec(None).to_tool_list())
+
+    return tools
 
 
 class ChatBotWorkfLow(Workflow):
-    llm = OpenRouter(model="deepseek/deepseek-chat-v3-0324:free")
-
     @step
     async def control(
         self,
@@ -71,20 +84,32 @@ class ChatBotWorkfLow(Workflow):
     async def llm_step(self, ctx: Context, ev: LLMStartEvent) -> LLMFinishedEvent:
         logging.info("Started llm request")
 
+        llm = OpenRouter(model="deepseek/deepseek-chat-v3-0324:free")
+
+        agent = ReActAgent.from_tools(
+            tools=get_llms_tools(),
+            llm=llm,
+            chat_history=build_message(None, ev.history),
+        )
+
+        llm.astream_chat()
+
         is_stream = await ctx.get(const.IS_STREAM, default=False)
 
-        if is_stream:
-            gen = await self.llm.astream_chat(build_message(ev.message, ev.history))
+        # TODO: Check if there is a way to stream the ouput of an agent without the thought process
+        if False:  # is_stream:
+            response = await agent.astream_chat(ev.message)
+            gen = response.async_response_gen()
 
-            async for response in gen:
-                ctx.write_event_to_stream(LLMProgressEvent(response=response.delta))
+            async for delta in gen:
+                ctx.write_event_to_stream(LLMProgressEvent(response=delta))
         else:
-            response = await self.llm.achat(build_message(ev.message, ev.history))
-            ctx.write_event_to_stream(
-                LLMProgressEvent(response=response.message.content)
-            )
+            response = await agent.achat(
+                ev.message
+            )  # build_message(ev.message, ev.history))
+            ctx.write_event_to_stream(LLMProgressEvent(response=response.response))
 
-        return LLMFinishedEvent(result=response.message.content)
+        return LLMFinishedEvent(result=response.response)
 
     @step
     async def audio_prepare(
