@@ -84,7 +84,7 @@ class ChatBotWorkfLow(Workflow):
     async def llm_step(self, ctx: Context, ev: LLMStartEvent) -> LLMFinishedEvent:
         logging.info("Started llm request")
 
-        llm = OpenRouter(model="deepseek/deepseek-chat-v3-0324:free")
+        llm = OpenRouter(model="deepseek/deepseek-r1:free")
 
         agent = ReActAgent.from_tools(
             tools=get_llms_tools(),
@@ -97,7 +97,7 @@ class ChatBotWorkfLow(Workflow):
         is_stream = await ctx.get(const.IS_STREAM, default=False)
 
         # TODO: Check if there is a way to stream the ouput of an agent without the thought process
-        if False:  # is_stream:
+        if is_stream:
             response = await agent.astream_chat(ev.message)
             gen = response.async_response_gen()
 
