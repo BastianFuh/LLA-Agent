@@ -9,12 +9,21 @@ from util import const
 import gradio as gr
 
 
-async def chat(message, history, is_stream: bool, audio_output: bool):
+async def chat(
+    message,
+    history,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    search_engine: str,
+):
     workflow = ChatBotWorkfLow(timeout=60)
 
     ctx = Context(workflow)
     await ctx.set(const.IS_STREAM, is_stream)
     await ctx.set(const.AUDIO_OUTPUT, audio_output)
+    await ctx.set(const.MODEL, model)
+    await ctx.set(const.SEARCH_ENGINE, search_engine)
     response = ""
 
     start_event = ChatBotStartEvent(message=message, history=history)

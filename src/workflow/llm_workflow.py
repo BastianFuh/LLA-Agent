@@ -12,6 +12,7 @@ from llama_index.core.base.llms.types import ChatMessage
 from llama_index.core.agent import ReActAgent
 
 from llama_index.tools.tavily_research import TavilyToolSpec
+from llama_index.tools.google import GoogleSearchToolSpec
 
 from openai import AsyncOpenAI
 
@@ -29,6 +30,8 @@ from util import const
 
 import logging
 
+import os
+
 
 def build_message(message: str, history: list[dict]):
     llm_message = list()
@@ -43,12 +46,24 @@ def build_message(message: str, history: list[dict]):
     return llm_message if len(llm_message) > 0 else None
 
 
-def get_llms_tools() -> list:
+async def get_llms_tools(ctx: Context) -> list:
     tools = list()
 
-    # API Keys are provided via the environment but because the tools do not have
-    # default values "None" needs to be passed to them
-    tools.extend(TavilyToolSpec(None).to_tool_list())
+    search_engine = await ctx.get(const.SEARCH_ENGINE)
+
+    if search_engine == const.TAVILY:
+        # API Keys are provided via the environment but because the tools do not have
+        # default values "None" needs to be passed to them
+        tools.extend(TavilyToolSpec(None).to_tool_list())
+
+    if search_engine == const.GOOGLE:
+        tools.extend(
+            GoogleSearchToolSpec(
+                key=os.getenv("GOOGLE_API_KEY"),
+                engine=os.getenv("GOOGLE_SEARCH_ENGINE"),
+                num=10,
+            ).to_tool_list()
+        )
 
     return tools
 
@@ -84,10 +99,13 @@ class ChatBotWorkfLow(Workflow):
     async def llm_step(self, ctx: Context, ev: LLMStartEvent) -> LLMFinishedEvent:
         logging.info("Started llm request")
 
-        llm = OpenRouter(model="deepseek/deepseek-chat:free")
+        model = await ctx.get(const.MODEL)
+        llm = OpenRouter(model=model)
+
+        tools = await get_llms_tools(ctx)
 
         agent = ReActAgent.from_tools(
-            tools=get_llms_tools(),
+            tools=tools,
             llm=llm,
             chat_history=build_message(None, ev.history),
         )
