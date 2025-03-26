@@ -84,7 +84,7 @@ class ChatBotWorkfLow(Workflow):
     async def llm_step(self, ctx: Context, ev: LLMStartEvent) -> LLMFinishedEvent:
         logging.info("Started llm request")
 
-        llm = OpenRouter(model="deepseek/deepseek-r1:free")
+        llm = OpenRouter(model="deepseek/deepseek-chat:free")
 
         agent = ReActAgent.from_tools(
             tools=get_llms_tools(),
