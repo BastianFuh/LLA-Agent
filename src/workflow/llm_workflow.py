@@ -11,8 +11,7 @@ from llama_index.core.base.llms.types import ChatMessage
 
 from llama_index.core.agent import ReActAgent
 
-from llama_index.tools.tavily_research import TavilyToolSpec
-from llama_index.tools.google import GoogleSearchToolSpec
+from llama_index.core.tools import FunctionTool
 
 from openai import AsyncOpenAI
 
@@ -27,14 +26,14 @@ from workflow.events import (
 )
 
 from util import const
+from workflow import functions
 
 import logging
-
-import os
 
 
 def build_message(message: str, history: list[dict]):
     llm_message = list()
+
     for element in history:
         llm_message.append(
             ChatMessage(role=element["role"], content=element["content"])
@@ -47,23 +46,17 @@ def build_message(message: str, history: list[dict]):
 
 
 async def get_llms_tools(ctx: Context) -> list:
-    tools = list()
+    tools = list([FunctionTool.from_defaults(functions.think)])
 
     search_engine = await ctx.get(const.SEARCH_ENGINE)
 
     if search_engine == const.TAVILY:
         # API Keys are provided via the environment but because the tools do not have
         # default values "None" needs to be passed to them
-        tools.extend(TavilyToolSpec(None).to_tool_list())
+        tools.extend([FunctionTool.from_defaults(functions.tavily_search)])
 
     if search_engine == const.GOOGLE:
-        tools.extend(
-            GoogleSearchToolSpec(
-                key=os.getenv("GOOGLE_API_KEY"),
-                engine=os.getenv("GOOGLE_SEARCH_ENGINE"),
-                num=10,
-            ).to_tool_list()
-        )
+        tools.extend([FunctionTool.from_defaults(functions.google_search)])
 
     return tools
 
@@ -100,6 +93,7 @@ class ChatBotWorkfLow(Workflow):
         logging.info("Started llm request")
 
         model = await ctx.get(const.MODEL)
+        logging.info(f"Using model: {model}")
         llm = OpenRouter(model=model)
 
         tools = await get_llms_tools(ctx)
