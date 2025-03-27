@@ -9,10 +9,18 @@ OPTION_MODEL: list[tuple[str, str]] = [
     ("DeepSeek: R1 (free)", "deepseek/deepseek-r1:free"),
     ("Mistral: Mistral Nemo (free)", "mistralai/mistral-nemo:free"),
     ("Meta: Llama 3.1 8B Instruct (free)", "meta-llama/llama-3.1-8b-instruct:free"),
-    # TODO: Find out why these do not work?
-    # ("Gemini Flash 2.5 Experimental (free)", "google/gemini-2.5-pro-exp-03-25:free"),
-    # ("Gemini Flash 2.0 Experimental (free)", "google/gemini-2.0-flash-exp:free"),
-    # ("Gemini Pro 2.0 Experimental (free)", "google/gemini-2.0-pro-exp-02-05:free"),
+    (
+        "Gemini Flash 2.0 Experimental (free) WARNING: MIGHT NOT WORK BECAUSE OF UPTIME PROBLEMS",
+        "google/gemini-2.0-flash-exp:free",
+    ),
+    (
+        "Gemini Flash 2.5 Experimental (free) WARNING: MIGHT NOT WORK BECAUSE OF UPTIME PROBLEMS",
+        "google/gemini-2.5-pro-exp-03-25:free",
+    ),
+    (
+        "Gemini Pro 2.0 Experimental (free) WARNING: MIGHT NOT WORK BECAUSE OF UPTIME PROBLEMS",
+        "google/gemini-2.0-pro-exp-02-05:free",
+    ),
 ]
 
 NONE = "none"
