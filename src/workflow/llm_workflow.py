@@ -48,7 +48,7 @@ def build_message(message: str, history: list[dict]):
 async def get_llms_tools(ctx: Context) -> list:
     tools = list([FunctionTool.from_defaults(functions.think)])
 
-    search_engine = await ctx.get(const.SEARCH_ENGINE)
+    search_engine = await ctx.get(const.SEARCH_ENGINE, default=const.NONE)
 
     if search_engine == const.TAVILY:
         # API Keys are provided via the environment but because the tools do not have
@@ -57,6 +57,14 @@ async def get_llms_tools(ctx: Context) -> list:
 
     if search_engine == const.GOOGLE:
         tools.extend([FunctionTool.from_defaults(functions.google_search)])
+
+    if search_engine != const.NONE:
+        tools.extend(
+            [
+                FunctionTool.from_defaults(functions.summarize_website),
+                FunctionTool.from_defaults(functions.summarize_websites),
+            ]
+        )
 
     return tools
 
