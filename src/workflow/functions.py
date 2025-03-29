@@ -1,13 +1,41 @@
+import grequests
+
+import os
+import json
+
+import logging
+
+import traceback
+import html2text
+
 from typing import List, Optional
 from llama_index.tools.google import GoogleSearchToolSpec
 from llama_index.tools.tavily_research import TavilyToolSpec
 from llama_index.readers.web import SimpleWebPageReader
 from llama_index.core import VectorStoreIndex
 
-import os
-import json
+from llama_index.core import Settings
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.llms.openai import OpenAI
+from llama_index.core.schema import Document
 
-import logging
+
+def load_webpages(urls: List[str]):
+    documents = list()
+
+    request = [grequests.get(url, timeout=10) for url in urls]
+
+    responses = grequests.map(requests=request, size=4)
+
+    documents.extend(
+        [
+            Document(text=html2text.html2text(response.text), id_=response.url)
+            for response in responses
+            if response is not None
+        ]
+    )
+
+    return documents
 
 
 def summarize_website(url: str, query: str) -> str:
@@ -24,7 +52,16 @@ def summarize_website(url: str, query: str) -> str:
     """
     logging.info(f"Called summarize_website for {url} with {query}")
 
-    documents = SimpleWebPageReader(html_to_text=True).load_data([url])
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+    Settings.llm = OpenAI(model="gpt-4o-mini-2024-07-18")
+
+    documents = load_webpages([url])
+
+    if len(documents) == 0:
+        logging.debug(f"Error {url} could not be accessed")
+        return f"There was an error with summarizing {url}. The website could not be accessed."
 
     index = VectorStoreIndex.from_documents(documents)
 
@@ -53,40 +90,47 @@ def summarize_websites(urls: list[str], query: str) -> list[str]:
     return summaries
 
 
-def google_search(query: str, max_results: Optional[int] = 6) -> List[dict]:
+def google_websearch(query: str, max_results: Optional[int] = 6) -> List[dict]:
     """
-    Make a query to the Google search engine to receive a list of results.
+    Make a query to the Google search engine to receive a list of results. The query can use
+    the google search operators which allows the composition of a sophisticated query.
+
+    For the best performance the query should follow these points:
+    - Be precise
+    - Use relevant keywords
+    - For COMPLEX searches use the google search operators
 
     Args:
-        query (str): The query to be passed to Google search.
-        max_results (int, optional): The number of search results to return. Defaults to None.
-
-    Raises:
-        ValueError: If the 'num' is not an integer between 1 and 10.
+        query (str): The query to be passed to google search.
+        max_results (int, optional): The number of search results to return. Defaults to 6.
 
     Returns:
         results: A list of dictionaries containing the results:
             url: The url of the result.
             content: The content of the result.
     """
-    logging.info(f"Called google_search for {query}")
-    search_engine = GoogleSearchToolSpec(
-        key=os.getenv("GOOGLE_API_KEY"),
-        engine=os.getenv("GOOGLE_SEARCH_ENGINE"),
-        num=max_results,
-    )
+    try:
+        logging.info(f"Called google_search for {query}")
+        search_engine = GoogleSearchToolSpec(
+            key=os.getenv("GOOGLE_API_KEY"),
+            engine=os.getenv("GOOGLE_SEARCH_ENGINE"),
+            num=max_results,
+        )
 
-    search_results = search_engine.google_search(query)
+        search_results = search_engine.google_search(query)
 
-    result = list()
-    for document in search_results:
-        for search_result in json.loads(document.text)["items"]:
-            result.append(
-                {
-                    "url": search_result["link"],
-                    "content": f"Title: {search_result['title']} Content \n {search_result['snippet']}",
-                }
-            )
+        result = list()
+        for document in search_results:
+            for search_result in json.loads(document.text)["items"]:
+                result.append(
+                    {
+                        "url": search_result["link"],
+                        "content": f"Title: {search_result['title']} Content \n {search_result['snippet']}",
+                    }
+                )
+    except Exception as e:
+        print(e)
+        print(traceback.format_exc())
 
     return result
 

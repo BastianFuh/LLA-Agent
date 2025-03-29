@@ -56,7 +56,7 @@ async def get_llms_tools(ctx: Context) -> list:
         tools.extend([FunctionTool.from_defaults(functions.tavily_search)])
 
     if search_engine == const.GOOGLE:
-        tools.extend([FunctionTool.from_defaults(functions.google_search)])
+        tools.extend([FunctionTool.from_defaults(functions.google_websearch)])
 
     if search_engine != const.NONE:
         tools.extend(
@@ -110,9 +110,8 @@ class ChatBotWorkfLow(Workflow):
             tools=tools,
             llm=llm,
             chat_history=build_message(None, ev.history),
+            max_iterations=30,
         )
-
-        llm.astream_chat()
 
         is_stream = await ctx.get(const.IS_STREAM, default=False)
 

@@ -1,3 +1,4 @@
+import grequests
 from frontend.gui import create_gui
 
 import logging

@@ -2,7 +2,7 @@ import gradio as gr
 
 from frontend.functions import chat
 
-from util.const import OPTION_MODEL, OPTION_SEARCH_ENGINE
+from util.const import OPTION_MODEL, OPTION_SEARCH_ENGINE, OPTION_EMBEDDING
 
 
 def create_gui() -> gr.Blocks:
@@ -15,6 +15,12 @@ def create_gui() -> gr.Blocks:
                     choices=OPTION_MODEL,
                     value=OPTION_MODEL[0][1],
                     label="Chatbot Model",
+                )
+
+                embedding_model = gr.Dropdown(
+                    choices=OPTION_EMBEDDING,
+                    value=OPTION_EMBEDDING[0][1],
+                    label="Embedding Model",
                 )
 
                 search_engine = gr.Dropdown(
@@ -41,7 +47,13 @@ def create_gui() -> gr.Blocks:
                     fn=chat,
                     type="messages",
                     chatbot=chatbot,
-                    additional_inputs=[is_stream, audio_output, model, search_engine],
+                    additional_inputs=[
+                        is_stream,
+                        audio_output,
+                        model,
+                        embedding_model,
+                        search_engine,
+                    ],
                     fill_height=True,
                 )
 

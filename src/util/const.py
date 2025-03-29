@@ -1,9 +1,12 @@
 IS_STREAM: str = "is_stream"
 AUDIO_OUTPUT: str = "audio_output"
 MODEL: str = "model"
+EMBEDDING_MODEL: str = "embedding"
 SEARCH_ENGINE: str = "serach_engine"
 
-OPTION_MODEL: list[tuple[str, str]] = [
+OptionType = list[tuple[str, str]]
+
+OPTION_MODEL: OptionType = [
     ("DeepSeek: V3 0324 (free)", "deepseek/deepseek-chat-v3-0324:free"),
     ("DeepSeek: V3 (free)", "deepseek/deepseek-chat:free"),
     ("DeepSeek: R1 (free)", "deepseek/deepseek-r1:free"),
@@ -21,6 +24,14 @@ OPTION_MODEL: list[tuple[str, str]] = [
         "Gemini Pro 2.0 Experimental (free) WARNING: MIGHT NOT WORK BECAUSE OF UPTIME PROBLEMS",
         "google/gemini-2.0-pro-exp-02-05:free",
     ),
+]
+
+OPTION_EMBEDDING: OptionType = [
+    (
+        "MiniLM L12 v2 (fast)",
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    ),
+    ("BGE M3 (kind of slow)", "BAAI/bge-m3"),
 ]
 
 NONE = "none"
