@@ -11,7 +11,6 @@ import html2text
 from typing import List, Optional
 from llama_index.tools.google import GoogleSearchToolSpec
 from llama_index.tools.tavily_research import TavilyToolSpec
-from llama_index.readers.web import SimpleWebPageReader
 from llama_index.core import VectorStoreIndex
 
 from llama_index.core import Settings
