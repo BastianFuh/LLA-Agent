@@ -66,7 +66,7 @@ def summarize_website(url: str, query: str) -> str:
 
     input_query = f"Summarize in very meticulously detail. {query}"
 
-    return index.as_query_engine().query(input_query).response
+    return f"Source: {url} \n Content:{index.as_query_engine().query(input_query).response}"
 
 
 def summarize_websites(urls: list[str], query: str) -> list[str]:
@@ -97,7 +97,7 @@ def google_websearch(query: str, max_results: Optional[int] = 6) -> List[dict]:
     For the best performance the query should follow these points:
     - Be precise
     - Use relevant keywords
-    - For COMPLEX searches use the google search operators
+    - Use the google search operators for complex searches
 
     Args:
         query (str): The query to be passed to google search.
