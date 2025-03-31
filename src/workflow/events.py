@@ -1,4 +1,4 @@
-from llama_index.core.workflow import Event, StartEvent, StopEvent
+from llama_index.core.workflow import Event, StartEvent
 import numpy as np
 
 
@@ -13,7 +13,7 @@ class LLMStartEvent(Event):
 
 
 class LLMFinishedEvent(Event):
-    result: str
+    result: str | None
 
 
 class LLMProgressEvent(Event):
