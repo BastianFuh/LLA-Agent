@@ -26,7 +26,7 @@ from workflow.events import (
 )
 
 from util import const
-from workflow import functions
+from workflow import tools
 
 import logging
 
@@ -46,27 +46,27 @@ def build_message(message: str, history: list[dict]):
 
 
 async def get_llms_tools(ctx: Context) -> list:
-    tools = list([FunctionTool.from_defaults(functions.think)])
+    llm_tools = list([FunctionTool.from_defaults(tools.think)])
 
     search_engine = await ctx.get(const.SEARCH_ENGINE, default=const.NONE)
 
     if search_engine == const.TAVILY:
         # API Keys are provided via the environment but because the tools do not have
         # default values "None" needs to be passed to them
-        tools.extend([FunctionTool.from_defaults(functions.tavily_search)])
+        llm_tools.extend([FunctionTool.from_defaults(tools.tavily_search)])
 
     if search_engine == const.GOOGLE:
-        tools.extend([FunctionTool.from_defaults(functions.google_websearch)])
+        llm_tools.extend([FunctionTool.from_defaults(tools.google_websearch)])
 
     if search_engine != const.NONE:
-        tools.extend(
+        llm_tools.extend(
             [
-                FunctionTool.from_defaults(functions.summarize_website),
-                FunctionTool.from_defaults(functions.summarize_websites),
+                FunctionTool.from_defaults(tools.summarize_website),
+                FunctionTool.from_defaults(tools.summarize_websites),
             ]
         )
 
-    return tools
+    return llm_tools
 
 
 class ChatBotWorkfLow(Workflow):
