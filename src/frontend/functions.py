@@ -2,7 +2,7 @@ from llama_index.core.workflow import Context
 
 from workflow.events import LLMProgressEvent
 
-from workflow.llm_workflow import ChatBotWorkfLow
+from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
 from workflow.events import ChatBotStartEvent, AudioStreamEvent, LLMFinishedEvent
 
 from util import const
