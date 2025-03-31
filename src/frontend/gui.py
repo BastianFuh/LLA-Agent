@@ -7,13 +7,11 @@ from util.const import OPTION_MODEL, OPTION_SEARCH_ENGINE, OPTION_EMBEDDING
 
 def create_gui() -> gr.Blocks:
     with gr.Blocks(fill_height=True) as demo:
-        # Streaming functions need to be declared in the gr.Blocks() context
-
         with gr.Tabs(selected=1):
             with gr.Tab("Options", id=0, scale=1):
                 model = gr.Dropdown(
                     choices=OPTION_MODEL,
-                    value=OPTION_MODEL[0][1],
+                    value=OPTION_MODEL[5][1],
                     label="Chatbot Model",
                 )
 
