@@ -3,7 +3,7 @@ from llama_index.core.workflow import Context
 from workflow.events import LLMProgressEvent
 
 from workflow.llm_workflow import ChatBotWorkfLow
-from workflow.events import ChatBotStartEvent, AudioStreamEvent
+from workflow.events import ChatBotStartEvent, AudioStreamEvent, LLMFinishedEvent
 
 from util import const
 
@@ -11,8 +11,8 @@ import gradio as gr
 
 
 async def chat(
-    message,
-    history,
+    message: str,
+    history: dict,
     is_stream: bool,
     audio_output: bool,
     model: str,
@@ -39,7 +39,6 @@ async def chat(
             yield response
 
         if isinstance(event, AudioStreamEvent):
-            # You can't return None here
             yield [
                 response,
                 gr.Audio(
@@ -50,4 +49,3 @@ async def chat(
                     interactive=False,
                 ),
             ]
-            # yield response, event.audio_chunk
