@@ -38,13 +38,13 @@ Observation: tool response
 
 You should keep repeating the above format till you have enough information to answer the question without using any more tools. At that point, you must respond in one of the following two formats:
 
-First:
+Positive Answer:
 ```
 Thought: I can answer without using any more tools. I'll use the user's language to answer
 Answer: [your answer here (In the same language as the user's question)]
 ```
 
-Second:
+Negative Answer:
 ```
 Thought: I cannot answer the question with the provided tools.
 Answer: [your answer here (In the same language as the user's question)]
