@@ -9,9 +9,10 @@ from llama_index.core.workflow import (
 from llama_index.llms.openrouter import OpenRouter
 from llama_index.core.base.llms.types import ChatMessage
 
-from llama_index.core.agent.react import ReActAgent, ReActChatFormatter
+from llama_index.core.agent.react import ReActChatFormatter
+from llama_index.core.agent.workflow import ReActAgent
 
-from llama_index.core.tools import FunctionTool
+from llama_index.core.agent.workflow.workflow_events import AgentStream
 
 from openai import AsyncOpenAI
 
@@ -26,7 +27,7 @@ from workflow.events import (
 )
 
 from util import const
-from workflow import tools
+from workflow import utils as w_utils
 
 import logging
 
@@ -45,30 +46,6 @@ def build_message(message: str, history: list[dict]):
         llm_message.append(ChatMessage(role="user", content=message))
 
     return llm_message if len(llm_message) > 0 else None
-
-
-async def get_llms_tools(ctx: Context) -> list:
-    llm_tools = list([FunctionTool.from_defaults(tools.think)])
-
-    search_engine = await ctx.get(const.SEARCH_ENGINE, default=const.NONE)
-
-    if search_engine == const.TAVILY:
-        # API Keys are provided via the environment but because the tools do not have
-        # default values "None" needs to be passed to them
-        llm_tools.extend([FunctionTool.from_defaults(tools.tavily_search)])
-
-    if search_engine == const.GOOGLE:
-        llm_tools.extend([FunctionTool.from_defaults(tools.google_websearch)])
-
-    if search_engine != const.NONE:
-        llm_tools.extend(
-            [
-                FunctionTool.from_defaults(tools.summarize_website),
-                FunctionTool.from_defaults(tools.summarize_websites),
-            ]
-        )
-
-    return llm_tools
 
 
 class ChatBotWorkfLow(Workflow):
@@ -112,34 +89,41 @@ class ChatBotWorkfLow(Workflow):
         logging.info(f"Using model: {model}")
         llm = OpenRouter(model=model)
 
-        tools = await get_llms_tools(ctx)
+        llm_tools = await w_utils.get_llms_tools(ctx)
 
-        agent = ReActAgent.from_tools(
-            tools=tools,
+        agent = ReActAgent(
+            name="Chatbot Agent",
+            description="Todo",
+            tools=llm_tools,
             llm=llm,
-            chat_history=build_message(None, ev.history),
-            max_iterations=30,
-            react_chat_formatter=ReActChatFormatter.from_defaults(
-                system_header=self.PROMPT_FILE
-            ),
+            formatter=ReActChatFormatter.from_defaults(system_header=self.PROMPT_FILE),
         )
+
+        agent_ctx = Context(agent)
 
         is_stream = await ctx.get(const.IS_STREAM, default=False)
 
         # TODO: Check if there is a way to stream the ouput of an agent without the thought process
         if is_stream:
-            response = await agent.astream_chat(ev.message)
-            gen = response.async_response_gen()
+            handler = agent.run(
+                ev.message, ctx=agent_ctx, chat_history=build_message(None, ev.history)
+            )
 
-            async for delta in gen:
-                ctx.write_event_to_stream(LLMProgressEvent(response=delta))
+            async for handler_ev in handler.stream_events():
+                if isinstance(handler_ev, AgentStream):
+                    ctx.write_event_to_stream(
+                        LLMProgressEvent(response=handler_ev.delta)
+                    )
+
+            response = await handler
         else:
-            response = await agent.achat(
-                ev.message
-            )  # build_message(ev.message, ev.history))
-            ctx.write_event_to_stream(LLMProgressEvent(response=response.response))
+            response = await agent.run(
+                ev.message, ctx=agent_ctx, chat_history=build_message(None, ev.history)
+            )
 
-        return LLMFinishedEvent(result=response.response)
+        ctx.write_event_to_stream(LLMProgressEvent(response=response.response.content))
+
+        return LLMFinishedEvent(result=response.response.content)
 
     @step
     async def audio_prepare(
