@@ -49,3 +49,27 @@ async def chat(
                     interactive=False,
                 ),
             ]
+
+
+def process_select(state, c1, c2, c3, c4):
+    options = [c1, c2, c3, c4]
+
+    assert options.count(True) <= 2, "The option select broke"
+
+    if options.count(True) > 1:
+        options[state["selected_option"]] = False
+
+    for i, o in enumerate(options):
+        if o:
+            state["selected_option"] = i
+
+    return state, options[0], options[1], options[2], options[3]
+
+
+def process_unselect(state, c1, c2, c3, c4):
+    options = [c1, c2, c3, c4]
+
+    if options.count(False) == len(options):
+        state["selected_option"] = None
+
+    return state
