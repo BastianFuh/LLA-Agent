@@ -9,7 +9,7 @@ from llama_index.core.workflow import (
 from llama_index.llms.openrouter import OpenRouter
 from llama_index.core.base.llms.types import ChatMessage
 
-from llama_index.core.agent import ReActAgent
+from llama_index.core.agent.react import ReActAgent, ReActChatFormatter
 
 from llama_index.core.tools import FunctionTool
 
@@ -29,6 +29,8 @@ from util import const
 from workflow import tools
 
 import logging
+
+from pathlib import Path
 
 
 def build_message(message: str, history: list[dict]):
@@ -70,6 +72,12 @@ async def get_llms_tools(ctx: Context) -> list:
 
 
 class ChatBotWorkfLow(Workflow):
+    PROMPT_FILE = (
+        (Path(__file__).parents[0] / Path("prompt.md"))
+        .open("r", encoding="utf-8")
+        .read()
+    )
+
     @step
     async def control(
         self,
@@ -111,6 +119,9 @@ class ChatBotWorkfLow(Workflow):
             llm=llm,
             chat_history=build_message(None, ev.history),
             max_iterations=30,
+            react_chat_formatter=ReActChatFormatter.from_defaults(
+                system_header=self.PROMPT_FILE
+            ),
         )
 
         is_stream = await ctx.get(const.IS_STREAM, default=False)
