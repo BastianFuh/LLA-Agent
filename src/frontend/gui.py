@@ -1,12 +1,25 @@
 import gradio as gr
-
 import frontend.functions as F
 
 from util.const import OPTION_MODEL, OPTION_SEARCH_ENGINE, OPTION_EMBEDDING
 
+import os
+
 
 def create_gui() -> gr.Blocks:
     with gr.Blocks(fill_height=True) as demo:
+        default_browser_state = {
+            "language": "",
+            "language_proficiency": "",
+            "difficulty": "",
+            "additional_information": "",
+        }
+        browser_state = gr.BrowserState(
+            default_browser_state,
+            storage_key="lla-agent",
+            secret=os.getenv("LLA_AGENT_BROWSER_STATE_SECRET"),
+        )
+
         with gr.Tabs(selected=1):
             with gr.Tab("Options", id=0, scale=1):
                 model = gr.Dropdown(
@@ -37,18 +50,35 @@ def create_gui() -> gr.Blocks:
 
             with gr.Tab("ChatBot", id=1, scale=1):
                 create_chatbot_tab(
-                    is_stream, audio_output, model, embedding_model, search_engine
+                    browser_state,
+                    is_stream,
+                    audio_output,
+                    model,
+                    embedding_model,
+                    search_engine,
                 )
 
             with gr.Tab("Multiple Choice", id=2, scale=1):
                 create_multiple_choice_questions(
-                    is_stream, audio_output, model, embedding_model, search_engine
+                    browser_state,
+                    is_stream,
+                    audio_output,
+                    model,
+                    embedding_model,
+                    search_engine,
                 )
 
     return demo
 
 
-def create_chatbot_tab(is_stream, audio_output, model, embedding_model, search_engine):
+def create_chatbot_tab(
+    browser_state: gr.BrowserState,
+    is_stream,
+    audio_output,
+    model,
+    embedding_model,
+    search_engine,
+):
     chatbot = gr.Chatbot(
         scale=2,
         type="messages",
@@ -69,14 +99,66 @@ def create_chatbot_tab(is_stream, audio_output, model, embedding_model, search_e
     )
 
 
+def create_input(
+    browser_state: gr.BrowserState, textArea: bool, key_name: str, label: str
+):
+    def init(browser_state: gr.BrowserState):
+        return browser_state[key_name]
+
+    if textArea:
+        field = gr.TextArea(
+            value=init,
+            label=label,
+            inputs=[browser_state],
+        )
+    else:
+        field = gr.Textbox(
+            value=init,
+            label=label,
+            inputs=[browser_state],
+        )
+
+    def update(browser_state: gr.BrowserState, value: str):
+        browser_state[key_name] = value
+        return browser_state
+
+    gr.on(
+        triggers=[field.blur, field.submit],
+        fn=update,
+        inputs=[browser_state, field],
+        outputs=[browser_state],
+    )
+
+    return field
+
+
 def create_multiple_choice_questions(
-    is_stream, audio_output, model, embedding_model, search_engine
+    browser_state: gr.BrowserState,
+    is_stream,
+    audio_output,
+    model,
+    embedding_model,
+    search_engine,
 ):
     with gr.Sidebar(position="right"):
-        language = gr.Textbox(label="Language")
-        language_proficiency = gr.Textbox(label="Language Proficiency")
-        difficulty = gr.Textbox(label="Difficulty")
-        additional_information = gr.TextArea(label="Additional Information")
+        # language = gr.Textbox(value=browser_state["language"], label="Language")
+        # language_proficiency = gr.Textbox(
+        #    value=browser_state["language_proficiency"], label="Language Proficiency"
+        # )
+        # difficulty = gr.Textbox(value=browser_state["difficulty"], label="Difficulty")
+        # additional_information = gr.TextArea(
+        #    value=browser_state["additional_information"],
+        #    label="Additional Information",
+        # )
+
+        language = create_input(browser_state, False, "language", "Language")
+        language_proficiency = create_input(
+            browser_state, False, "language_proficiency", "Language Proficiency"
+        )
+        difficulty = create_input(browser_state, False, "difficulty", "Difficulty")
+        additional_information = create_input(
+            browser_state, True, "additional_information", "Additional Information"
+        )
 
     with gr.Column(
         scale=1,
