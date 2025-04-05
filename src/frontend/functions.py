@@ -85,11 +85,6 @@ async def create_multiple_choice_questions(
     difficulty: str,
     additional_information: str,
 ):
-    print(model)
-    print(language)
-    print(language_proficiency)
-    print(difficulty)
-    print(additional_information)
     if language == "":
         raise gr.Error("No language was input. Please add one in the right sidebar.")
     if language_proficiency == "":
@@ -105,7 +100,7 @@ async def create_multiple_choice_questions(
         language, language_proficiency, difficulty, additional_information
     )
 
-    state[QGT.QUESTION_ANSWERS] = question_data[QGT.QUESTION_ANSWERS]
+    state[QGT.QUESTION_ANSWER_INDEX] = question_data[QGT.QUESTION_ANSWER_INDEX]
 
     options = question_data[QGT.QUESTION_OPTIONS]
 

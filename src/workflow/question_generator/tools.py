@@ -4,7 +4,8 @@ import random
 QUESTION_BASE_TEXT = "question_base_text"
 QUESTION_TEXT = "question_text"
 QUESTION_OPTIONS = "question_options"
-QUESTION_ANSWERS = "question_answers"
+QUESTION_ANSWER = "question_answer"
+QUESTION_ANSWER_INDEX = "question_answer_index"
 QUESTION_HINT = "question_hint"
 
 
@@ -15,7 +16,7 @@ You have started the question generation with this text:
 {text}
 ```
 
-Now you must take the generated text and replace a word from it with the placeholder token: "___". You also must generate a list of potential options for the question. It has to contain the correct answer and three incorrect answers. 
+Now you must take the generated text and replace a word from it with the placeholder token: "___". You also must generate the correct answer.
 """
 
 
@@ -42,49 +43,88 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
     return _CREATE_BASE_TEXT_INSTRUCTION.format(text=text)
 
 
-async def create_multiplechoice_question(
+async def create_question_with_placholder(
     context: Context,
     question_text: str,
-    options: list[str],
-    correct_answer: int,
-    hint: str,
+    answer: str,
 ) -> str:
-    """Registers a multiple choise question.
+    """Registers a question.
     The input text should have a placeholder in the form of "___" which represents a part of an
     original sentence which has to be filled by the correct answer.
 
-    The answer will be given in a list alongside three incorrect options.
-
-    Additionally the index of the correct answer inside this list is also given.
-
-    You also should give a hint which helps in answering the question. For example when
-    you replaced a verb it might give information about the expected form.
-    The hint should be in english.
-    The hint should only be written in keypoints and should not be a sentence.
-    Make sure that the hint
+    The input consists of the modified text and the solutions
 
     Args:
         context (Context): context
         modified_text (str): The text of the question which should have a placeholder segment inside of it.
-        options (list[str]): A list which contains one correct answer and three incorrect answers.
-        correct_answer (int): The list index of the correct answer.
-        hint (str): A hint which helps in answering the answer.
+        answer (str): The answer to the modified text.
 
     Returns:
-        str: The success of operation.
+        str: The next instruction
     """
     if not question_text.__contains__("___"):
         return 'Your question text was malformed and does not contain the placeholder for the answer which is: "___". Please correct this.'
 
-    if not len(options) == 4:
-        return "The options list should only contain four options please correct this."
-
-    if correct_answer > 3:
-        return "The index for the correct answer is outside of the bound of the list. It should be between 0 and 3 and should be the index for the correct answer. Please correct this."
-
     await context.set(QUESTION_TEXT, question_text)
-    await context.set(QUESTION_OPTIONS, options)
-    await context.set(QUESTION_ANSWERS, correct_answer)
+    # await context.set(QUESTION_OPTIONS, options)
+    await context.set(QUESTION_ANSWER, answer)
+
+    return "You must now generate a hint for the answer."
+
+
+async def create_question_hint(context: Context, hint: str) -> str:
+    """This function is used to create hint for a give question.
+
+    You should give a hint which helps in answering the question. For example when
+    you replaced a verb it might give information about the expected form.
+
+    The hint should be in english.
+
+    The hint should only be written in keypoints and should not be a sentence.
+
+    The hint
+
+    Args:
+        context (Context): context
+        hint (_type_): Hint to help solve the question.
+
+    Returns:
+        str: Next instruction
+    """
+
     await context.set(QUESTION_HINT, hint)
 
-    return "You have successfully registered the question. You can now finish."
+    return "You must now generate the incorrect options for the question type."
+
+
+async def create_multiple_choice_question_incorrect_options(
+    context: Context, additional_options: list[str]
+) -> str:
+    """This function is used to register options for a multiple choice question.
+
+    The options should be similar to the answer but they must not fit the
+    criteria of the hint.
+    None of these options you give should make sense if they are used as an
+    answer for the question.
+
+    The options must not include the correct answer.
+    The options must exactly contain three values, not more and not less.
+
+    Args:
+        context (Context): context
+        additional_options (list[str]): List of wrong options for the question.
+
+    Returns:
+        str: Next instruction
+    """
+
+    answer = await context.get(QUESTION_ANSWER)
+
+    additional_options.insert(random.randint(0, len(additional_options) - 1), answer)
+
+    answer_index = additional_options.index(answer)
+
+    await context.set(QUESTION_OPTIONS, additional_options)
+    await context.set(QUESTION_ANSWER_INDEX, answer_index)
+
+    return "You have done everything you can now finish up."

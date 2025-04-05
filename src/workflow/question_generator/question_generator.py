@@ -34,7 +34,11 @@ class QuestionGenerator:
         return ReActAgent(
             tools=[
                 FunctionTool.from_defaults(QGT.create_base_text),
-                FunctionTool.from_defaults(QGT.create_multiplechoice_question),
+                FunctionTool.from_defaults(QGT.create_question_with_placholder),
+                FunctionTool.from_defaults(QGT.create_question_hint),
+                FunctionTool.from_defaults(
+                    QGT.create_multiple_choice_question_incorrect_options
+                ),
             ],
             llm=self.llm,
             # chat_history=build_message(None, ev.history),
@@ -81,7 +85,7 @@ class QuestionGenerator:
             QGT.QUESTION_BASE_TEXT: await ctx.get(QGT.QUESTION_BASE_TEXT),
             QGT.QUESTION_TEXT: await ctx.get(QGT.QUESTION_TEXT),
             QGT.QUESTION_OPTIONS: await ctx.get(QGT.QUESTION_OPTIONS),
-            QGT.QUESTION_ANSWERS: await ctx.get(QGT.QUESTION_ANSWERS),
+            QGT.QUESTION_ANSWER_INDEX: await ctx.get(QGT.QUESTION_ANSWER_INDEX),
             QGT.QUESTION_HINT: await ctx.get(QGT.QUESTION_HINT),
         }
 

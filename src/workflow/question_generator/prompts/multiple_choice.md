@@ -4,9 +4,5 @@ The length of the sentence should be derived from the previously specified diffi
 
 Follow the following steps and use the appropriate tool at each step.
 
-## Your steps:
-1. You will first have to generate a base text for the question.
-
-2. After that, you will take the first generated text and then replace a word from it with the placeholder token: "___". You also must generate the potential options for the question. There should be the correct answer and three incorrect answers. 
-
-
+## Your first:
+1. You will first have to generate multiple base texts for the question. You have to generate atleast 10.

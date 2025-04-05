@@ -28,7 +28,7 @@ Please always start with a Thought.
 
 Never surround your response with markdown code markers. You may use code markers within your response if you need to.
 
-Please use a valid JSON format for the Action Input. Do NOT do this {{'input': 'hello world', 'num_beams': 5}}.
+Please use a valid JSON format for the Action Input. Do NOT do this {{'input': 'hello world', 'num_beams': 5}}. Also always use JSON never output a code based function call. 
 
 If this format is used, the tool will respond in the following format:
 
