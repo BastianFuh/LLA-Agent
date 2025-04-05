@@ -4,6 +4,8 @@ from workflow.events import LLMProgressEvent
 
 from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
 from workflow.events import ChatBotStartEvent, AudioStreamEvent
+from workflow.question_generator.question_generator import QuestionGenerator
+from workflow.question_generator import tools as QGT
 
 from util import const
 
@@ -73,3 +75,48 @@ def process_unselect(state, c1, c2, c3, c4):
         state["selected_option"] = None
 
     return state
+
+
+async def create_multiple_choice_questions(
+    state: gr.State,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    print(model)
+    print(language)
+    print(language_proficiency)
+    print(difficulty)
+    print(additional_information)
+    if language == "":
+        raise gr.Error("No language was input. Please add one in the right sidebar.")
+    if language_proficiency == "":
+        raise gr.Error(
+            "No language profiency was input. Please add one in the right sidebar."
+        )
+    if difficulty == "":
+        raise gr.Error("No difficulty was input. Please add one in the right sidebar.")
+
+    question_generator = QuestionGenerator(model)
+
+    question_data = await question_generator.generate_multiple_choice(
+        language, language_proficiency, difficulty, additional_information
+    )
+
+    state[QGT.QUESTION_ANSWERS] = question_data[QGT.QUESTION_ANSWERS]
+
+    options = question_data[QGT.QUESTION_OPTIONS]
+
+    question_text = (
+        f"{question_data[QGT.QUESTION_TEXT]} ({question_data[QGT.QUESTION_HINT]})"
+    )
+
+    return (
+        question_text,
+        gr.Checkbox(label=options[0]),
+        gr.Checkbox(label=options[1]),
+        gr.Checkbox(label=options[2]),
+        gr.Checkbox(label=options[3]),
+    )

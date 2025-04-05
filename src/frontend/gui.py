@@ -40,7 +40,7 @@ def create_gui() -> gr.Blocks:
                     is_stream, audio_output, model, embedding_model, search_engine
                 )
 
-            with gr.Tab("Fill the Spot", id=2, scale=1):
+            with gr.Tab("Multiple Choice", id=2, scale=1):
                 create_multiple_choice_questions(
                     is_stream, audio_output, model, embedding_model, search_engine
                 )
@@ -72,6 +72,12 @@ def create_chatbot_tab(is_stream, audio_output, model, embedding_model, search_e
 def create_multiple_choice_questions(
     is_stream, audio_output, model, embedding_model, search_engine
 ):
+    with gr.Sidebar(position="right"):
+        language = gr.Textbox(label="Language")
+        language_proficiency = gr.Textbox(label="Language Proficiency")
+        difficulty = gr.Textbox(label="Difficulty")
+        additional_information = gr.TextArea(label="Additional Information")
+
     with gr.Column(
         scale=1,
     ):
@@ -79,8 +85,8 @@ def create_multiple_choice_questions(
 
         with gr.Column(scale=2, variant="panel"):
             question_text = gr.TextArea(
-                "*Question*: ",
-                show_label=False,
+                "",
+                label="Question",
                 container=False,
                 lines=1,
                 interactive=False,
@@ -88,10 +94,10 @@ def create_multiple_choice_questions(
 
             with gr.Column():
                 question_options = [
-                    gr.Checkbox(label="1: "),
-                    gr.Checkbox(label="2: "),
-                    gr.Checkbox(label="3: "),
-                    gr.Checkbox(label="4: "),
+                    gr.Checkbox(label=""),
+                    gr.Checkbox(label=""),
+                    gr.Checkbox(label=""),
+                    gr.Checkbox(label=""),
                 ]
 
                 for checkbox in question_options:
@@ -108,6 +114,19 @@ def create_multiple_choice_questions(
             with gr.Row():
                 question_create_button = gr.Button("Next")
                 question_submit_button = gr.Button("Submit")
+
+            question_create_button.click(
+                F.create_multiple_choice_questions,
+                [
+                    state,
+                    model,
+                    language,
+                    language_proficiency,
+                    difficulty,
+                    additional_information,
+                ],
+                [question_text] + question_options,
+            )
 
         chatbot = gr.Chatbot(
             scale=1,
