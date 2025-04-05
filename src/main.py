@@ -3,14 +3,16 @@ from frontend.gui import create_gui
 
 import logging
 
-import mlflow
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 
-logging.basicConfig(level=logging.INFO)
+from phoenix.otel import register
 
 
 if __name__ == "__main__":
-    mlflow.llama_index.autolog()
-    mlflow.set_experiment("LLA-Agent")
+    tracer_provider = register(project_name="LLA-Agent")
+    LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
+
+    logging.basicConfig(level=logging.INFO)
 
     demo = create_gui()
 
