@@ -141,16 +141,6 @@ def create_multiple_choice_questions(
     search_engine,
 ):
     with gr.Sidebar(position="right"):
-        # language = gr.Textbox(value=browser_state["language"], label="Language")
-        # language_proficiency = gr.Textbox(
-        #    value=browser_state["language_proficiency"], label="Language Proficiency"
-        # )
-        # difficulty = gr.Textbox(value=browser_state["difficulty"], label="Difficulty")
-        # additional_information = gr.TextArea(
-        #    value=browser_state["additional_information"],
-        #    label="Additional Information",
-        # )
-
         language = create_input(browser_state, False, "language", "Language")
         language_proficiency = create_input(
             browser_state, False, "language_proficiency", "Language Proficiency"
@@ -208,6 +198,12 @@ def create_multiple_choice_questions(
                     additional_information,
                 ],
                 [question_text] + question_options,
+            )
+
+            question_submit_button.click(
+                F.verify_multiple_choice_question,
+                [state] + question_options,
+                question_options,
             )
 
         chatbot = gr.Chatbot(

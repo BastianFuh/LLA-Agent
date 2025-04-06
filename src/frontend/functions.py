@@ -21,36 +21,40 @@ async def chat(
     embedding_model: str,
     search_engine: str,
 ):
-    workflow = ChatBotWorkfLow(timeout=None)
+    try:
+        workflow = ChatBotWorkfLow(timeout=None)
 
-    ctx = Context(workflow)
-    await ctx.set(const.IS_STREAM, is_stream)
-    await ctx.set(const.AUDIO_OUTPUT, audio_output)
-    await ctx.set(const.MODEL, model)
-    await ctx.set(const.EMBEDDING_MODEL, embedding_model)
-    await ctx.set(const.SEARCH_ENGINE, search_engine)
-    response = ""
+        ctx = Context(workflow)
+        await ctx.set(const.IS_STREAM, is_stream)
+        await ctx.set(const.AUDIO_OUTPUT, audio_output)
+        await ctx.set(const.MODEL, model)
+        await ctx.set(const.EMBEDDING_MODEL, embedding_model)
+        await ctx.set(const.SEARCH_ENGINE, search_engine)
+        response = ""
 
-    start_event = ChatBotStartEvent(message=message, history=history)
+        start_event = ChatBotStartEvent(message=message, history=history)
 
-    handler = workflow.run(start_event=start_event, ctx=ctx)
+        handler = workflow.run(start_event=start_event, ctx=ctx)
 
-    async for event in handler.stream_events():
-        if isinstance(event, LLMProgressEvent):
-            response += event.response
-            yield response
+        async for event in handler.stream_events():
+            if isinstance(event, LLMProgressEvent):
+                response += event.response
+                yield response
 
-        if isinstance(event, AudioStreamEvent):
-            yield [
-                response,
-                gr.Audio(
-                    event.audio_chunk,
-                    type="numpy",
-                    streaming=True,
-                    autoplay=True,
-                    interactive=False,
-                ),
-            ]
+            if isinstance(event, AudioStreamEvent):
+                yield [
+                    response,
+                    gr.Audio(
+                        event.audio_chunk,
+                        type="numpy",
+                        streaming=True,
+                        autoplay=True,
+                        interactive=False,
+                    ),
+                ]
+    except Exception:
+        gr.Error("There was an error. Please try again.")
+        return
 
 
 def process_select(state, c1, c2, c3, c4):
@@ -104,14 +108,37 @@ async def create_multiple_choice_questions(
 
     options = question_data[QGT.QUESTION_OPTIONS]
 
-    question_text = (
-        f"{question_data[QGT.QUESTION_TEXT]} ({question_data[QGT.QUESTION_HINT]})"
-    )
+    question_text = f"{question_data[QGT.QUESTION_TEXT]}"
 
     return (
-        question_text,
-        gr.Checkbox(label=options[0]),
-        gr.Checkbox(label=options[1]),
-        gr.Checkbox(label=options[2]),
-        gr.Checkbox(label=options[3]),
+        gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
+        gr.Checkbox(label=options[0], value=False, info=""),
+        gr.Checkbox(label=options[1], value=False, info=""),
+        gr.Checkbox(label=options[2], value=False, info=""),
+        gr.Checkbox(label=options[3], value=False, info=""),
     )
+
+
+async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
+    options = [c1, c2, c3, c4]
+
+    if not state.__contains__(QGT.QUESTION_ANSWER_INDEX):
+        gr.Info("Please generate a question first.")
+        return gr.skip()
+
+    correct_answer = state[QGT.QUESTION_ANSWER_INDEX]
+
+    try:
+        selected_answer = options.index(True)
+    except ValueError:
+        gr.Info("Please select a option")
+        return gr.skip()
+
+    updates = len(options) * [gr.Checkbox(info="")]
+
+    if options[correct_answer]:
+        updates[correct_answer] = gr.Checkbox(info="Correct Answer")
+    else:
+        updates[selected_answer] = gr.Checkbox(info="Wrong Answer")
+
+    return updates

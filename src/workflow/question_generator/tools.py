@@ -82,7 +82,7 @@ async def create_question_hint(context: Context, hint: str) -> str:
 
     The hint should only be written in keypoints and should not be a sentence.
 
-    The hint
+    The hint must not contain newline characters. If you want to seperate multiple keypoints use commas.
 
     Args:
         context (Context): context
