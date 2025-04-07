@@ -69,12 +69,10 @@ async def create_question_with_placholder(
     # await context.set(QUESTION_OPTIONS, options)
     await context.set(QUESTION_ANSWER, answer)
 
-    return "You must now generate a hint for the answer."
+    return "You must now generate a hint for the answer. The hint must be in english."
 
 
-async def create_question_hint(
-    context: Context, hint: str, question_type: Literal["multiple_choice", "free_text"]
-) -> str:
+async def create_question_hint(context: Context, hint: str) -> str:
     """This function is used to create hint for a give question.
 
     You should give a hint which helps in answering the question. For example when you replaced a verb it might give information about the expected form.
@@ -88,13 +86,14 @@ async def create_question_hint(
     Args:
         context (Context): context
         hint (str): Hint to help solve the question.
-        question_type (Literal): The question type. It is either multiple_choice or free_text
 
     Returns:
         str: Next instruction
     """
 
     await context.set(QUESTION_HINT, hint)
+
+    question_type = await context.get("question_type")
 
     if question_type == "multiple_choice":
         return "You must now generate the incorrect options for the question type."

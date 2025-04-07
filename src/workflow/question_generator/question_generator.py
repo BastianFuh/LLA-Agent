@@ -85,6 +85,8 @@ class QuestionGenerator:
 
         ctx = Context(agent)
 
+        await ctx.set("question_type", "multiple_choice")
+
         await agent.run(self.MULTIPLE_CHOICE_PROMPT, ctx=ctx)
 
         output = {
@@ -116,6 +118,7 @@ class QuestionGenerator:
         )
 
         ctx = Context(agent)
+        await ctx.set("question_type", "free_text")
 
         await agent.run(self.FREE_TEXT_PROMPT, ctx=ctx)
 
