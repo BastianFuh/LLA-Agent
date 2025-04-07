@@ -27,6 +27,10 @@ OPTION_MODEL: OptionType = [
         "Gemini Pro 2.0 Experimental (free) WARNING: MIGHT NOT WORK BECAUSE OF UPTIME PROBLEMS",
         "google/gemini-2.0-pro-exp-02-05:free",
     ),
+    (
+        "OpenAI: GPT-4o-mini",
+        "openai/gpt-4o-mini",
+    ),
 ]
 
 OPTION_EMBEDDING: OptionType = [
