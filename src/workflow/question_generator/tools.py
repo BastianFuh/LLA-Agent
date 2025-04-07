@@ -1,3 +1,4 @@
+from typing import Literal
 from llama_index.core.workflow import Context
 import random
 
@@ -25,6 +26,8 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
     It takes a list of possible options and will select one of them.
     The list should contain atleast 5 elements.
 
+    The input values for potential_texts must never contain the placeholder in the from of "___".
+
     Args:
         context (Context): context
         text (list[str]): A list of option which will form the base text. Should contain atleast 5 elements.
@@ -44,13 +47,10 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
 
 
 async def create_question_with_placholder(
-    context: Context,
-    question_text: str,
-    answer: str,
+    context: Context, question_text: str, answer: str
 ) -> str:
     """Registers a question.
-    The input text should have a placeholder in the form of "___" which represents a part of an
-    original sentence which has to be filled by the correct answer.
+    The input text of this tool should have a placeholder in the form of "___" which represents a part of an original sentence which has to be filled by the correct answer.
 
     The input consists of the modified text and the solutions
 
@@ -72,11 +72,12 @@ async def create_question_with_placholder(
     return "You must now generate a hint for the answer."
 
 
-async def create_question_hint(context: Context, hint: str) -> str:
+async def create_question_hint(
+    context: Context, hint: str, question_type: Literal["multiple_choice", "free_text"]
+) -> str:
     """This function is used to create hint for a give question.
 
-    You should give a hint which helps in answering the question. For example when
-    you replaced a verb it might give information about the expected form.
+    You should give a hint which helps in answering the question. For example when you replaced a verb it might give information about the expected form.
 
     The hint should be in english.
 
@@ -86,7 +87,8 @@ async def create_question_hint(context: Context, hint: str) -> str:
 
     Args:
         context (Context): context
-        hint (_type_): Hint to help solve the question.
+        hint (str): Hint to help solve the question.
+        question_type (Literal): The question type. It is either multiple_choice or free_text
 
     Returns:
         str: Next instruction
@@ -94,7 +96,11 @@ async def create_question_hint(context: Context, hint: str) -> str:
 
     await context.set(QUESTION_HINT, hint)
 
-    return "You must now generate the incorrect options for the question type."
+    if question_type == "multiple_choice":
+        return "You must now generate the incorrect options for the question type."
+
+    if question_type == "free_text":
+        return "You have done everything you can now finish up."
 
 
 async def create_multiple_choice_question_incorrect_options(
@@ -102,10 +108,8 @@ async def create_multiple_choice_question_incorrect_options(
 ) -> str:
     """This function is used to register options for a multiple choice question.
 
-    The options should be similar to the answer but they must not fit the
-    criteria of the hint.
-    None of these options you give should make sense if they are used as an
-    answer for the question.
+    The options should be similar to the answer but they must not fit the criteria of the hint.
+    None of these options you give should make sense if they are used as an answer for the question.
 
     The options must not include the correct answer.
     The options must exactly contain three values, not more and not less.

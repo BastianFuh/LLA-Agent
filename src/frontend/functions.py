@@ -142,3 +142,59 @@ async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
         updates[selected_answer] = gr.Checkbox(info="Wrong Answer")
 
     return updates
+
+
+async def create_free_text_question(
+    state: gr.State,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    if language == "":
+        raise gr.Error("No language was input. Please add one in the right sidebar.")
+    if language_proficiency == "":
+        raise gr.Error(
+            "No language profiency was input. Please add one in the right sidebar."
+        )
+    if difficulty == "":
+        raise gr.Error("No difficulty was input. Please add one in the right sidebar.")
+
+    question_generator = QuestionGenerator(model)
+
+    question_data = await question_generator.generate_free_text(
+        language, language_proficiency, difficulty, additional_information
+    )
+
+    state[QGT.QUESTION_ANSWER] = question_data[QGT.QUESTION_ANSWER]
+
+    question_text = f"{question_data[QGT.QUESTION_TEXT]}"
+
+    return (
+        gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
+        gr.Textbox(value="", info=""),
+    )
+
+
+async def verify_free_text_question(state: dict, answer: str):
+    if not state.__contains__(QGT.QUESTION_ANSWER):
+        gr.Info("Please generate a question first.")
+        return gr.skip()
+
+    correct_answer = state[QGT.QUESTION_ANSWER]
+
+    if correct_answer == answer:
+        update_answer_field = gr.Textbox(info="Correct Answer")
+    else:
+        update_answer_field = gr.Textbox(info="Wrong Answer")
+
+    return update_answer_field
+
+
+async def show_free_text_answer(state: dict):
+    if not state.__contains__(QGT.QUESTION_ANSWER):
+        gr.Info("Please generate a question first.")
+        return gr.skip()
+
+    return gr.Textbox(info=state[QGT.QUESTION_ANSWER])

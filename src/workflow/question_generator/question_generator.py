@@ -27,6 +27,12 @@ class QuestionGenerator:
         .read()
     )
 
+    FREE_TEXT_PROMPT = (
+        (Path(__file__).parents[0] / Path("prompts") / Path("free_text.md"))
+        .open("r", encoding="utf-8")
+        .read()
+    )
+
     def __init__(self, model: str):
         self.llm = OpenRouter(model=model)
 
@@ -86,6 +92,37 @@ class QuestionGenerator:
             QGT.QUESTION_TEXT: await ctx.get(QGT.QUESTION_TEXT),
             QGT.QUESTION_OPTIONS: await ctx.get(QGT.QUESTION_OPTIONS),
             QGT.QUESTION_ANSWER_INDEX: await ctx.get(QGT.QUESTION_ANSWER_INDEX),
+            QGT.QUESTION_HINT: await ctx.get(QGT.QUESTION_HINT),
+        }
+
+        return output
+
+    async def generate_free_text(
+        self,
+        language: str,
+        language_proficiency: str,
+        difficulty: str,
+        additional_information: str,
+    ) -> dict:
+        random_number = random.randint(0, sys.maxsize)
+
+        additional_information = f"You should generate a random question, use this seed for the randomness  {random_number}. {additional_information}"
+
+        agent = self.get_agent(
+            language=language,
+            language_proficiency=language_proficiency,
+            difficulty=difficulty,
+            additional_information=additional_information,
+        )
+
+        ctx = Context(agent)
+
+        await agent.run(self.FREE_TEXT_PROMPT, ctx=ctx)
+
+        output = {
+            QGT.QUESTION_BASE_TEXT: await ctx.get(QGT.QUESTION_BASE_TEXT),
+            QGT.QUESTION_TEXT: await ctx.get(QGT.QUESTION_TEXT),
+            QGT.QUESTION_ANSWER: await ctx.get(QGT.QUESTION_ANSWER),
             QGT.QUESTION_HINT: await ctx.get(QGT.QUESTION_HINT),
         }
 
