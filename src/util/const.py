@@ -10,6 +10,9 @@ OPTION_MODEL: OptionType = [
     ("DeepSeek: V3 0324 (free)", "deepseek/deepseek-chat-v3-0324:free"),
     ("DeepSeek: V3 (free)", "deepseek/deepseek-chat:free"),
     ("DeepSeek: R1 (free)", "deepseek/deepseek-r1:free"),
+    ("DeepSeek: V3 0324", "deepseek/deepseek-chat-v3-0324"),
+    ("DeepSeek: V3", "deepseek/deepseek-chat"),
+    ("DeepSeek: R1", "deepseek/deepseek-r1"),
     ("Mistral: Mistral Nemo (free)", "mistralai/mistral-nemo:free"),
     ("Meta: Llama 3.1 8B Instruct (free)", "meta-llama/llama-3.1-8b-instruct:free"),
     (
