@@ -11,9 +11,6 @@ from workflow import utils
 
 from pathlib import Path
 
-import random
-import sys
-
 
 class QuestionGenerator:
     BASE_PROMPT = (
@@ -72,10 +69,6 @@ class QuestionGenerator:
         difficulty: str,
         additional_information: str,
     ) -> dict:
-        random_number = random.randint(0, sys.maxsize)
-
-        additional_information = f"You should generate a random question, use this seed for the randomness  {random_number}. {additional_information}"
-
         agent = self.get_agent(
             language=language,
             language_proficiency=language_proficiency,
@@ -106,10 +99,6 @@ class QuestionGenerator:
         difficulty: str,
         additional_information: str,
     ) -> dict:
-        random_number = random.randint(0, sys.maxsize)
-
-        additional_information = f"You should generate a random question, use this seed for the randomness  {random_number}. {additional_information}"
-
         agent = self.get_agent(
             language=language,
             language_proficiency=language_proficiency,

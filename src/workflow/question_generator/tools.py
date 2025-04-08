@@ -50,14 +50,15 @@ async def create_question_with_placholder(
     context: Context, question_text: str, answer: str
 ) -> str:
     """Registers a question.
-    The input text of this tool should have a placeholder in the form of "___" which represents a part of an original sentence which has to be filled by the correct answer.
+    The input question_text of the create_question_with_placholder tool MUST contain the original sentence with a part being replaced by "___".
+    The replaced part MUST be set as the answer.
 
-    The input consists of the modified text and the solutions
+    Grammatically interesting sections should be replaced rather than single nouns.
 
     Args:
         context (Context): context
         modified_text (str): The text of the question which should have a placeholder segment inside of it.
-        answer (str): The answer to the modified text.
+        answer (str): The replaced part.
 
     Returns:
         str: The next instruction
@@ -69,7 +70,7 @@ async def create_question_with_placholder(
     # await context.set(QUESTION_OPTIONS, options)
     await context.set(QUESTION_ANSWER, answer)
 
-    return "You must now generate a hint for the answer. The hint must be in english."
+    return "You MUST now generate a hint for the answer. The hint MUST be in english."
 
 
 async def create_question_hint(context: Context, hint: str) -> str:
@@ -79,9 +80,9 @@ async def create_question_hint(context: Context, hint: str) -> str:
 
     The hint should be in english.
 
-    The hint should only be written in keypoints and should not be a sentence.
+    The hint MUST only be written in keypoints and SHOULD NOT be a sentence.
 
-    The hint must not contain newline characters. If you want to seperate multiple keypoints use commas.
+    The hint MUST not contain newline characters. If you want to seperate multiple keypoints use commas.
 
     Args:
         context (Context): context
