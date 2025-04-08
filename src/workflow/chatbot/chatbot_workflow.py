@@ -86,8 +86,14 @@ class ChatBotWorkfLow(Workflow):
         logging.info("Started llm request")
 
         model = await ctx.get(const.MODEL)
-        logging.info(f"Using model: {model}")
-        llm = OpenRouter(model=model)
+
+        model_information = const.OPTION_MODEL[model]
+
+        model_name = model_information[0]
+        provider = model_information[1]
+
+        logging.info(f"Using model: {model_name} from provider {provider} ")
+        llm = w_utils.get_llm(model)
 
         llm_tools = await w_utils.get_llms_tools(ctx)
 

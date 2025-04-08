@@ -1,4 +1,3 @@
-from llama_index.llms.openrouter import OpenRouter
 from llama_index.core.tools import FunctionTool
 
 
@@ -7,6 +6,8 @@ from llama_index.core.agent.workflow import ReActAgent
 from llama_index.core.workflow import Context
 
 from workflow.question_generator import tools as QGT
+
+from workflow import utils
 
 from pathlib import Path
 
@@ -34,7 +35,7 @@ class QuestionGenerator:
     )
 
     def __init__(self, model: str):
-        self.llm = OpenRouter(model=model)
+        self.llm = utils.get_llm(model)
 
     def get_agent(self, **kwargs) -> ReActAgent:
         return ReActAgent(
@@ -47,7 +48,6 @@ class QuestionGenerator:
                 ),
             ],
             llm=self.llm,
-            # chat_history=build_message(None, ev.history),
             formatter=ReActChatFormatter.from_defaults(
                 system_header=self.BASE_PROMPT.format(
                     tool_desc="{tool_desc}",

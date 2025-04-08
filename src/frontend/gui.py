@@ -32,10 +32,9 @@ def create_gui() -> gr.Blocks:
 
         with gr.Tabs(selected=1):
             with gr.Tab("Options", id=0, scale=1):
+                options = list(OPTION_MODEL.keys())
                 model = gr.Dropdown(
-                    choices=OPTION_MODEL,
-                    value=OPTION_MODEL[1][1],
-                    label="Chatbot Model",
+                    choices=options, label="Chatbot Model", value=options[1]
                 )
 
                 embedding_model = gr.Dropdown(

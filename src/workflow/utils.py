@@ -1,3 +1,6 @@
+from llama_index.llms.openrouter import OpenRouter
+from llama_index.llms.openai import AsyncOpenAI, OpenAI
+
 from llama_index.core.workflow import Context
 from llama_index.core.tools import FunctionTool
 
@@ -28,3 +31,19 @@ async def get_llms_tools(ctx: Context) -> list:
         )
 
     return llm_tools
+
+
+def get_llm(model: str):
+    model_information = const.OPTION_MODEL[model]
+
+    match model_information[1]:
+        case const.PROVIDER_DEEPSEEK:
+            raise NotImplementedError
+        case const.PROVIDER_OPENAI:
+            return OpenAI(model=model_information[0], temperature=1, max_tokens=1024)
+        case const.PROVIDER_OPENROUTER:
+            return OpenRouter(
+                model=model_information[0], temperature=1, max_tokens=1024
+            )
+        case _:
+            raise ValueError("Unknown Provider")
