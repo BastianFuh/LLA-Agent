@@ -6,11 +6,11 @@ from llama_index.core.workflow import (
     Context,
     step,
 )
-from llama_index.llms.openrouter import OpenRouter
 from llama_index.core.base.llms.types import ChatMessage
 
 from llama_index.core.agent.react import ReActChatFormatter
-from llama_index.core.agent.workflow import ReActAgent
+from llama_index.core.agent.workflow import ReActAgent, FunctionAgent
+from llama_index.core.llms.function_calling import FunctionCallingLLM
 
 from llama_index.core.agent.workflow.workflow_events import AgentStream
 
@@ -49,14 +49,30 @@ def build_message(message: str, history: list[dict]):
 
 
 class ChatBotWorkfLow(Workflow):
-    PROMPT_FILE = (
-        (Path(__file__).parents[0] / Path("prompt.md"))
+    REACT_PROMPT_FILE = (
+        (Path(__file__).parents[0] / Path("react_prompt.md"))
         .open("r", encoding="utf-8")
         .read()
     )
 
-    def __init__(self, prompt: str = PROMPT_FILE):
+    FUNCTION_CALLING_PROMPT_FILE = (
+        (Path(__file__).parents[0] / Path("function_calling_prompt.md"))
+        .open("r", encoding="utf-8")
+        .read()
+    )
+
+    def __init__(self, prompt: str = None, **kwargs):
+        super().__init__(**kwargs)
         self.prompt = prompt
+
+    def _get_prompt_for_llm(self, llm):
+        if self.prompt is None:
+            if isinstance(llm, FunctionCallingLLM):
+                return self.FUNCTION_CALLING_PROMPT_FILE
+            else:
+                return self.REACT_PROMPT_FILE
+        else:
+            return self.prompt
 
     @step
     async def control(
@@ -100,13 +116,24 @@ class ChatBotWorkfLow(Workflow):
 
         llm_tools = await w_utils.get_llms_tools(ctx)
 
-        agent = ReActAgent(
-            name="Chatbot Agent",
-            description="Todo",
-            tools=llm_tools,
-            llm=llm,
-            formatter=ReActChatFormatter.from_defaults(system_header=self.prompt),
-        )
+        prompt = self._get_prompt_for_llm(llm)
+
+        if isinstance(llm, FunctionCallingLLM):
+            agent = FunctionAgent(
+                name="Chatbot Agent",
+                description="Todo",
+                tools=llm_tools,
+                llm=llm,
+                system_prompt=prompt,
+            )
+        else:
+            agent = ReActAgent(
+                name="Chatbot Agent",
+                description="Todo",
+                tools=llm_tools,
+                llm=llm,
+                formatter=ReActChatFormatter.from_defaults(system_header=prompt),
+            )
 
         agent_ctx = Context(agent)
 

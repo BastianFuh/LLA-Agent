@@ -95,6 +95,20 @@ def create_gui() -> gr.Blocks:
                     additional_information,
                 )
 
+            with gr.Tab("Translation", id=4, scale=1):
+                create_translation_question(
+                    browser_state,
+                    is_stream,
+                    audio_output,
+                    model,
+                    embedding_model,
+                    search_engine,
+                    language,
+                    language_proficiency,
+                    difficulty,
+                    additional_information,
+                )
+
     return demo
 
 
@@ -233,7 +247,7 @@ def create_multiple_choice_questions(
             placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
         )
         gr.ChatInterface(
-            fn=F.chat,
+            fn=F.basic_chat,
             type="messages",
             chatbot=chatbot,
             additional_inputs=[
@@ -309,7 +323,7 @@ def create_free_text_questions(
             placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
         )
         gr.ChatInterface(
-            fn=F.chat,
+            fn=F.basic_chat,
             type="messages",
             chatbot=chatbot,
             additional_inputs=[
@@ -320,4 +334,92 @@ def create_free_text_questions(
                 search_engine,
             ],
             fill_height=True,
+        )
+
+
+def create_translation_question(
+    browser_state: gr.BrowserState,
+    is_stream,
+    audio_output,
+    model,
+    embedding_model,
+    search_engine,
+    language,
+    language_proficiency,
+    difficulty,
+    additional_information,
+):
+    with gr.Column(
+        scale=1,
+    ):
+        state = gr.State({"selected_option": None})
+
+        with gr.Column(scale=2, variant="panel"):
+            question_text = gr.TextArea(
+                "",
+                label="Question",
+                container=False,
+                lines=1,
+                interactive=False,
+            )
+
+            with gr.Column():
+                answer_box = gr.Textbox(label="Answer")
+
+            with gr.Row():
+                question_create_button = gr.Button("Next")
+                question_submit_button = gr.Button("Submit")
+
+            question_create_button.click(
+                F.create_translation_question,
+                [
+                    state,
+                    model,
+                    language,
+                    language_proficiency,
+                    difficulty,
+                    additional_information,
+                ],
+                [question_text, answer_box],
+            )
+
+        chatbot = gr.Chatbot(
+            scale=1,
+            type="messages",
+            placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
+        )
+        gr.ChatInterface(
+            fn=F.translation_verifier_chat,
+            type="messages",
+            chatbot=chatbot,
+            additional_inputs=[
+                is_stream,
+                audio_output,
+                model,
+                embedding_model,
+                search_engine,
+            ],
+            fill_height=True,
+        )
+
+        gr.on(
+            triggers=[question_submit_button.click, answer_box.submit],
+            fn=F.append_to_chatbot_history,
+            inputs=[chatbot, answer_box],
+            outputs=[chatbot],
+        )
+
+        gr.on(
+            triggers=[question_submit_button.click, answer_box.submit],
+            fn=F.translation_verifier_chat,
+            inputs=[
+                answer_box,
+                chatbot,
+                is_stream,
+                audio_output,
+                model,
+                embedding_model,
+                search_engine,
+            ],
+            outputs=[chatbot],
         )

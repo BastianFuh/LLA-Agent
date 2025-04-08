@@ -11,6 +11,8 @@ from util import const
 
 import gradio as gr
 
+from pathlib import Path
+
 
 async def chat(
     message: str,
@@ -20,9 +22,13 @@ async def chat(
     model: str,
     embedding_model: str,
     search_engine: str,
+    prompt: str = None,
 ):
     try:
-        workflow = ChatBotWorkfLow(timeout=None)
+        workflow = ChatBotWorkfLow(
+            prompt=prompt,
+            timeout=None,
+        )
 
         ctx = Context(workflow)
         await ctx.set(const.IS_STREAM, is_stream)
@@ -54,7 +60,60 @@ async def chat(
                 ]
     except Exception:
         gr.Error("There was an error. Please try again.")
-        return
+
+
+async def basic_chat(
+    message: str,
+    history: dict,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
+):
+    await chat(
+        message,
+        history,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+        None,
+    )
+
+
+async def translation_verifier_chat(
+    message: str,
+    history: dict,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
+):
+    prompt = (
+        (
+            Path(__file__).parents[0]
+            / Path("..")
+            / Path("question_generator")
+            / Path("prompts")
+            / Path("base_translation.md")
+        )
+        .open("r", encoding="utf-8")
+        .read()
+    )
+
+    await chat(
+        message,
+        history,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+        prompt,
+    )
 
 
 def process_select(state, c1, c2, c3, c4):
@@ -81,14 +140,7 @@ def process_unselect(state, c1, c2, c3, c4):
     return state
 
 
-async def create_multiple_choice_questions(
-    state: gr.State,
-    model: str,
-    language: str,
-    language_proficiency: str,
-    difficulty: str,
-    additional_information: str,
-):
+def verify_input(language: str, language_proficiency: str, difficulty: str):
     if language == "":
         raise gr.Error("No language was input. Please add one in the right sidebar.")
     if language_proficiency == "":
@@ -97,6 +149,17 @@ async def create_multiple_choice_questions(
         )
     if difficulty == "":
         raise gr.Error("No difficulty was input. Please add one in the right sidebar.")
+
+
+async def create_multiple_choice_questions(
+    state: gr.State,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    verify_input(language, language_proficiency, difficulty)
 
     question_generator = QuestionGenerator(model)
 
@@ -152,14 +215,7 @@ async def create_free_text_question(
     difficulty: str,
     additional_information: str,
 ):
-    if language == "":
-        raise gr.Error("No language was input. Please add one in the right sidebar.")
-    if language_proficiency == "":
-        raise gr.Error(
-            "No language profiency was input. Please add one in the right sidebar."
-        )
-    if difficulty == "":
-        raise gr.Error("No difficulty was input. Please add one in the right sidebar.")
+    verify_input(language, language_proficiency, difficulty)
 
     question_generator = QuestionGenerator(model)
 
@@ -198,3 +254,34 @@ async def show_free_text_answer(state: dict):
         return gr.skip()
 
     return gr.Textbox(info=state[QGT.QUESTION_ANSWER])
+
+
+async def create_translation_question(
+    state: gr.State,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    verify_input(language, language_proficiency, difficulty)
+
+    question_generator = QuestionGenerator(model)
+
+    question_data = await question_generator.generate_translation_question(
+        language, language_proficiency, difficulty, additional_information
+    )
+
+    question_text = f"{question_data[QGT.QUESTION_BASE_TEXT]}"
+
+    return (
+        gr.Textbox(value=question_text),
+        gr.Textbox(value="", info=""),
+    )
+
+
+def append_to_chatbot_history(
+    history: list[gr.ChatMessage], message: str
+) -> list[gr.ChatMessage]:
+    history.append(gr.ChatMessage(role="user", content=message))
+    return history

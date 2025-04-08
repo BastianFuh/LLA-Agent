@@ -43,7 +43,14 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
     text = potential_texts[random.randint(3, len(potential_texts) - 1)]
 
     await context.set(QUESTION_BASE_TEXT, text)
-    return _CREATE_BASE_TEXT_INSTRUCTION.format(text=text)
+
+    question_type = await context.get("question_type")
+
+    match question_type:
+        case "translation":
+            return "You have done everything you can now finish up."
+        case _:
+            return _CREATE_BASE_TEXT_INSTRUCTION.format(text=text)
 
 
 async def create_question_with_placholder(
@@ -96,11 +103,12 @@ async def create_question_hint(context: Context, hint: str) -> str:
 
     question_type = await context.get("question_type")
 
-    if question_type == "multiple_choice":
-        return "You must now generate the incorrect options for the question type."
+    match question_type:
+        case "multiple_choice":
+            return "You must now generate the incorrect options for the question type."
 
-    if question_type == "free_text":
-        return "You have done everything you can now finish up."
+        case _:
+            return "You have done everything you can now finish up."
 
 
 async def create_multiple_choice_question_incorrect_options(
