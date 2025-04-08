@@ -55,6 +55,9 @@ class ChatBotWorkfLow(Workflow):
         .read()
     )
 
+    def __init__(self, prompt: str = PROMPT_FILE):
+        self.prompt = prompt
+
     @step
     async def control(
         self,
@@ -102,7 +105,7 @@ class ChatBotWorkfLow(Workflow):
             description="Todo",
             tools=llm_tools,
             llm=llm,
-            formatter=ReActChatFormatter.from_defaults(system_header=self.PROMPT_FILE),
+            formatter=ReActChatFormatter.from_defaults(system_header=self.prompt),
         )
 
         agent_ctx = Context(agent)
