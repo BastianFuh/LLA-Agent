@@ -61,7 +61,7 @@ class ChatBotWorkfLow(Workflow):
         .read()
     )
 
-    def __init__(self, prompt: str = None, **kwargs):
+    def __init__(self, prompt: str | dict[str, str] = None, **kwargs):
         super().__init__(**kwargs)
         self.prompt = prompt
 
@@ -72,7 +72,13 @@ class ChatBotWorkfLow(Workflow):
             else:
                 return self.REACT_PROMPT_FILE
         else:
-            return self.prompt
+            if isinstance(self.prompt, str):
+                return self.prompt
+
+            if isinstance(llm, FunctionCallingLLM):
+                return self.prompt["function"]
+            else:
+                return self.prompt["react"]
 
     @step
     async def control(

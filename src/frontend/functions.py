@@ -13,6 +13,8 @@ import gradio as gr
 
 from pathlib import Path
 
+import logging
+
 
 async def chat(
     message: str,
@@ -22,7 +24,7 @@ async def chat(
     model: str,
     embedding_model: str,
     search_engine: str,
-    prompt: str = None,
+    prompt: str | dict[str, str] = None,
 ):
     try:
         workflow = ChatBotWorkfLow(
@@ -64,14 +66,14 @@ async def chat(
 
 async def basic_chat(
     message: str,
-    history: dict,
+    history: list,
     is_stream: bool,
     audio_output: bool,
     model: str,
     embedding_model: str,
     search_engine: str,
 ):
-    await chat(
+    async for event in chat(
         message,
         history,
         is_stream,
@@ -80,40 +82,110 @@ async def basic_chat(
         embedding_model,
         search_engine,
         None,
+    ):
+        yield event
+
+
+def _create_translation_user_message(original: str, answer: str):
+    prompt = (
+        (
+            Path(__file__).parents[0]
+            / Path("..")
+            / Path("workflow")
+            / Path("question_generator")
+            / Path("prompts")
+            / Path("input_translation.md")
+        )
+        .open("r", encoding="utf-8")
+        .read()
     )
+
+    return prompt.format(original_text=original, translation=answer)
 
 
 async def translation_verifier_chat(
     message: str,
-    history: dict,
+    history: list,
     is_stream: bool,
     audio_output: bool,
     model: str,
     embedding_model: str,
     search_engine: str,
 ):
-    prompt = (
+    async for event in translation_verifier(
+        message,
+        history,
+        None,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+    ):
+        yield event
+
+
+async def translation_verifier(
+    answer: str,
+    history: list,
+    original: str | None,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
+):
+    react_prompt = (
         (
             Path(__file__).parents[0]
             / Path("..")
+            / Path("workflow")
             / Path("question_generator")
             / Path("prompts")
-            / Path("base_translation.md")
+            / Path("react_base_translation.md")
         )
         .open("r", encoding="utf-8")
         .read()
     )
 
-    await chat(
-        message,
+    function_calling_prompt = (
+        (
+            Path(__file__).parents[0]
+            / Path("..")
+            / Path("workflow")
+            / Path("question_generator")
+            / Path("prompts")
+            / Path("function_calling_base_translation.md")
+        )
+        .open("r", encoding="utf-8")
+        .read()
+    )
+
+    prompts = {"function": function_calling_prompt, "react": react_prompt}
+
+    if answer is None:
+        user_message = original
+    else:
+        user_message = _create_translation_user_message(original, answer)
+
+    async for event in chat(
+        user_message,
         history,
         is_stream,
         audio_output,
         model,
         embedding_model,
         search_engine,
-        prompt,
-    )
+        prompts,
+    ):
+        if isinstance(event, str):
+            history.append({"role": "assistant", "content": event})
+
+            yield history
+        else:
+            logging.warning(
+                "Translation chat got an event which is currently not supported"
+            )
 
 
 def process_select(state, c1, c2, c3, c4):
@@ -280,8 +352,10 @@ async def create_translation_question(
     )
 
 
-def append_to_chatbot_history(
-    history: list[gr.ChatMessage], message: str
-) -> list[gr.ChatMessage]:
-    history.append(gr.ChatMessage(role="user", content=message))
-    return history
+def append_to_chatbot_history(history: list, original: str, answer: str) -> list[dict]:
+    if answer is None:
+        message = original
+    else:
+        message = _create_translation_user_message(original, answer)
+    history.append({"role": "user", "content": message})
+    return history, ""
