@@ -11,7 +11,7 @@ from util import const
 
 import gradio as gr
 
-from pathlib import Path
+import prompts
 
 import logging
 
@@ -87,20 +87,9 @@ async def basic_chat(
 
 
 def _create_translation_user_message(original: str, answer: str):
-    prompt = (
-        (
-            Path(__file__).parents[0]
-            / Path("..")
-            / Path("workflow")
-            / Path("question_generator")
-            / Path("prompts")
-            / Path("input_translation.md")
-        )
-        .open("r", encoding="utf-8")
-        .read()
+    return prompts.QUESTION_GENERATOR_TRANSLATION_REQUEST_PROMPT.format(
+        original_text=original, translation=answer
     )
-
-    return prompt.format(original_text=original, translation=answer)
 
 
 async def translation_verifier_chat(
@@ -135,33 +124,10 @@ async def translation_verifier(
     embedding_model: str,
     search_engine: str,
 ):
-    react_prompt = (
-        (
-            Path(__file__).parents[0]
-            / Path("..")
-            / Path("workflow")
-            / Path("question_generator")
-            / Path("prompts")
-            / Path("react_base_translation.md")
-        )
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    function_calling_prompt = (
-        (
-            Path(__file__).parents[0]
-            / Path("..")
-            / Path("workflow")
-            / Path("question_generator")
-            / Path("prompts")
-            / Path("function_calling_base_translation.md")
-        )
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    prompts = {"function": function_calling_prompt, "react": react_prompt}
+    chat_prompts = {
+        "function": prompts.QUESTION_GENERATOR_TRANSLATION_FUNCTION_CHATBOT_PROMPT,
+        "react": prompts.QUESTION_GENERATOR_TRANSLATION_REACT_CHATBOT_PROMPT,
+    }
 
     if answer is None:
         user_message = original
@@ -176,7 +142,7 @@ async def translation_verifier(
         model,
         embedding_model,
         search_engine,
-        prompts,
+        chat_prompts,
     ):
         if isinstance(event, str):
             history.append({"role": "assistant", "content": event})

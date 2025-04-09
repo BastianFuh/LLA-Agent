@@ -31,7 +31,7 @@ from workflow import utils as w_utils
 
 import logging
 
-from pathlib import Path
+import prompts
 
 
 def build_message(message: str, history: list[dict]):
@@ -49,18 +49,6 @@ def build_message(message: str, history: list[dict]):
 
 
 class ChatBotWorkfLow(Workflow):
-    REACT_PROMPT_FILE = (
-        (Path(__file__).parents[0] / Path("react_prompt.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    FUNCTION_CALLING_PROMPT_FILE = (
-        (Path(__file__).parents[0] / Path("function_calling_prompt.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
     def __init__(self, prompt: str | dict[str, str] = None, **kwargs):
         super().__init__(**kwargs)
         self.prompt = prompt
@@ -68,9 +56,9 @@ class ChatBotWorkfLow(Workflow):
     def _get_prompt_for_llm(self, llm):
         if self.prompt is None:
             if isinstance(llm, FunctionCallingLLM):
-                return self.FUNCTION_CALLING_PROMPT_FILE
+                return prompts.CHATBOT_FUNCTION_PROMPT
             else:
-                return self.REACT_PROMPT_FILE
+                return prompts.CHATBOT_REACT_PROMPT
         else:
             if isinstance(self.prompt, str):
                 return self.prompt

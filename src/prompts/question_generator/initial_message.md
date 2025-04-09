@@ -6,4 +6,4 @@ Follow the following steps and use the appropriate tool at each step.
 
 First, you will have to generate multiple base texts for the question. You have to generate at least 10. 
 
-After that please follow the instructions from the tool response.
+After that please follow the instructions from the tool responses.

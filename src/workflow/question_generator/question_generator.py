@@ -10,60 +10,14 @@ from workflow.question_generator import tools as QGT
 
 from workflow import utils
 
-from pathlib import Path
+import prompts
 
 
 class QuestionGenerator:
-    REACT_BASE_PROMPT = (
-        (Path(__file__).parents[0] / Path("prompts") / Path("react_base.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    FUNCTION_CALLING_BASE_PROMPT = (
-        (Path(__file__).parents[0] / Path("prompts") / Path("function_calling_base.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    MULTIPLE_CHOICE_PROMPT = (
-        (Path(__file__).parents[0] / Path("prompts") / Path("multiple_choice.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    FREE_TEXT_PROMPT = (
-        (Path(__file__).parents[0] / Path("prompts") / Path("free_text.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
-    BASE_INPUT_PROMPT = (
-        (Path(__file__).parents[0] / Path("prompts") / Path("base_input.md"))
-        .open("r", encoding="utf-8")
-        .read()
-    )
-
     def __init__(self, model: str):
         self.llm = utils.get_llm(model)
 
     def get_agent(self, **kwargs) -> ReActAgent:
-        prompt = (
-            self.REACT_BASE_PROMPT.format(
-                tool_desc="{tool_desc}",
-                tool_names="{tool_names}",
-                language=kwargs["language"],
-                language_proficiency=kwargs["language_proficiency"],
-                difficulty=kwargs["difficulty"],
-                additional_information=kwargs["additional_information"],
-            )
-            # These replace functions ensure that the example jsons will not be detected as a replacable token
-            # in a later format call. Howerver this is still incredible jank and there might is a better option.
-            .replace("{'", "{{'")
-            .replace('{"', '{{"')
-            .replace("5}", "5}}")
-        )
-
         tools = [
             FunctionTool.from_defaults(QGT.create_base_text),
             FunctionTool.from_defaults(QGT.create_question_with_placholder),
@@ -75,9 +29,7 @@ class QuestionGenerator:
 
         if isinstance(self.llm, FunctionCallingLLM):
             prompt = (
-                self.FUNCTION_CALLING_BASE_PROMPT.format(
-                    tool_desc="{tool_desc}",
-                    tool_names="{tool_names}",
+                prompts.QUESTION_GENERATOR_BASE_FUNCTION_PROMPT.format(
                     language=kwargs["language"],
                     language_proficiency=kwargs["language_proficiency"],
                     difficulty=kwargs["difficulty"],
@@ -99,7 +51,7 @@ class QuestionGenerator:
             )
         else:
             prompt = (
-                self.REACT_BASE_PROMPT.format(
+                prompts.QUESTION_GENERATOR_BASE_REACT_PROMPT.format(
                     tool_desc="{tool_desc}",
                     tool_names="{tool_names}",
                     language=kwargs["language"],
@@ -139,7 +91,10 @@ class QuestionGenerator:
         await ctx.set("question_type", question_type)
 
         await agent.run(
-            self.BASE_INPUT_PROMPT.format(question_type=question_type), ctx=ctx
+            prompts.QUESTION_GENERATOR_INITIAL_MESSAGE_PROMPT.format(
+                question_type=question_type
+            ),
+            ctx=ctx,
         )
 
         return ctx
