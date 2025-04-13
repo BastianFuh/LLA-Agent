@@ -4,6 +4,11 @@ The length of the sentence should be derived from the previously specified diffi
 
 Follow the following steps and use the appropriate tool at each step.
 
-1. First, you will have to generate multiple base texts for the question. These sentences MUST be fully formed and not include a placeholder. You have to generate at least 10. 
-2. Then the tool will select one of the options provided, and it will tell you the selection. You then MUST generate the question out of it.
+
+# Instructions
+
+1. First, you will have to generate multiple base texts for the question. These sentences MUST be fully formed and not include a placeholder. You MUST generate at least 10. Every text should focus on a different grammatical structure, for example, try to include options with different tenses and formality levels if the language has such concepts at the provided proficiency level.
+
+2. Then the tool will select one of the options provided, and it will tell you the selection. You then MUST generate the question out of it. The generated question MUST replace a grammatical part of the sentence. NEVER replace a noun unless it includes a grammar concept. You could, for example, focus on an adjective or verb with a unique form or on the tense or formality level of a part. You might also replace a longer part of the sentence when appropriate. 
+
 3. After this you can finish.
