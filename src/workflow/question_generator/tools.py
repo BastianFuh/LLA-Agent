@@ -19,7 +19,8 @@ You have started the question generation with this text:
 {text}
 ```
 
-Now you must take the generated text and replace a word from it with the placeholder token: "___". You also must generate the correct answer.
+Every following step MUST ensure that the question is about {focus}.
+
 """
 
 
@@ -32,16 +33,19 @@ async def finish() -> str:
     return "The process was finished."
 
 
-async def create_base_text(context: Context, potential_texts: list[str]) -> str:
+async def create_base_text(
+    context: Context, potential_texts: list[list[str, str]]
+) -> str:
     """This function is used to register the initial base text of the question.
-    It takes a list of possible options and will select one of them.
+    It takes a list of tuples which contain the possible options alongside the grammar structure the option focuses on.
+    One of the options will then be selected
     The list should contain atleast 5 elements.
 
     The input values for potential_texts must never contain the placeholder in the from of "___".
 
     Args:
         context (Context): context
-        text (list[str]): A list of option which will form the base text. Should contain atleast 5 elements.
+        text (list[list[str, str]]): A list of tuples which contain in the first spot the question text and the second spot the grammar structure this option focuses on. Should contain atleast 5 elements.
 
     Returns:
         str: The selected base text and further instructions.
@@ -50,10 +54,13 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
     if len(potential_texts) < 5:
         return "Please ensure that the potential_texts list contains atleast 5 options."
 
-    # Select one option
-    text = potential_texts[random.randint(3, len(potential_texts) - 1)]
+    if "___" in potential_texts[0]:
+        return 'Your respons includes the placeholder marker "___". Please repeat this step and ensure not to include "___" in any option.'
 
-    await context.set(QUESTION_BASE_TEXT, text)
+    # Select one option
+    option = potential_texts[random.randint(3, len(potential_texts) - 1)]
+
+    await context.set(QUESTION_BASE_TEXT, option[0])
 
     question_type = await context.get("question_type")
 
@@ -61,7 +68,7 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
         case question_generator.TRANSLATION:
             return "You have done everything you can now finish up."
         case _:
-            return _CREATE_BASE_TEXT_INSTRUCTION.format(text=text)
+            return _CREATE_BASE_TEXT_INSTRUCTION.format(text=option[0], focus=option[1])
 
 
 async def create_question_with_placholder(

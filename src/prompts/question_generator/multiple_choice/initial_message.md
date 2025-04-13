@@ -8,13 +8,63 @@ Follow the following steps and use the appropriate tool at each step.
 
 # Instructions
 
-1. First, you will have to generate multiple base texts for the question. These sentences MUST be fully formed and not include a placeholder. You MUST generate at least 10. Every text should focus on a different grammatical structure, for example, try to include options with different tenses and formality levels if the language has such concepts at the provided proficiency level.
+## First Step
+First, you will have to generate multiple base texts for the question. 
+These sentences MUST be fully formed and not include a placeholder of "___". 
 
-2. Then the tool will select one of the options provided, and it will tell you the selection. You then MUST generate the question out of it. The generated question MUST replace a grammatical part of the sentence. NEVER replace a noun unless it includes a grammar concept. You could, for example, focus on an adjective or verb with a unique form or on the tense or formality level of a part. You might also replace a longer part of the sentence when appropriate. 
+You MUST generate at least 10. 
+Every text MUST use different grammatical structures. 
 
-3. Afterwards, you NEED to generate a hint for the question-and-answer pair.
+Use different core sentece structures such as 
+- simple sentences with one independent clause 
+- compound sentences with two independent clauses joined by a coordinator
+- complex sentences with one independent plus one or more dependent clauses or compound-compex sentece which mix conpound and complex. 
 
-4. In the end, you MUST generate the incorrect options for the question. Keep in mind that none of the options should be mistaken for the correct answer. Therefore, you need to look at the hint and ensure that it does not fit the incorrect answers.
+Use different tense structures such as:
+- Present Simple / Past Simple / Future Simple
+- Present Continuous / Past Continuous / Future Continuous
+- Present Perfect / Past Perfect / Future Perfect
+- Perfect Continuous Tenses
+
+Use a mix of nouns, pronouns, verbs, adjectives, adverbs, prepositions, conjunctions, articles or particles.
+
+Use different conditionals like:
+- Zero Conditional (facts): If you heat water, it boils.
+- First Conditional (real future): If it rains, I will stay in.
+- Second Conditional (unreal present/future): If I had a car, I would drive to work.
+- Third Conditional (unreal past): If I had studied, I would have passed.
+
+Use modal verbs such as can, could, must, might, should, would, will, shall.
+
+Use passive voice.
+
+Use relative clauses.
+
+Use question and negatives.
+
+Alter the length of the options. 
+Also NEVER include "___" in any of the options. 
+Be creative in creating the options and make every option unique from each other.
+Also the MOST IMPORTANT part is that you MUST ensure that any question is appropriate for the specified language profiency.
+
+## Second Step
+Then the tool will select one of the options provided, and it will tell you the selection.
+
+You then MUST generate the question out of it. 
+
+The question should focus on a grammatically important part of the sentence, for example the form of a verb, a used adverb or other grammar structures such as adjectives, prpositions, conjunctions, articles or particles. 
+
+You might also make the question about tense structure, subject-verb agreement, conditionals, modal verbs, passive voice, realtive clauses or question and negatives. 
+
+NEVER replace just a noun.
+
+## Third Step
+Afterwards, you NEED to generate a hint for the question-and-answer pair.
+
+## Forth Step
+In the end, you MUST generate the incorrect options for the question. 
+Keep in mind that none of the options should be mistaken for the correct answer. 
+Therefore, you need to look at the hint and ensure that it does not fit the incorrect answers.
 
 
 
