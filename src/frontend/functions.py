@@ -4,7 +4,7 @@ from workflow.events import LLMProgressEvent
 
 from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
 from workflow.events import ChatBotStartEvent, AudioStreamEvent
-from workflow.question_generator.base import QuestionGenerator
+from workflow.question_generator.base import QuestionGenerator, QuestionBuffer
 from workflow.question_generator import tools as QGT
 
 from util import const
@@ -14,6 +14,18 @@ import gradio as gr
 import prompts
 
 import logging
+
+
+def _get_question_generator(state: dict, model: str):
+    if state.keys().__contains__("question_buffer"):
+        buffer = state["question_buffer"]
+    else:
+        buffer = QuestionBuffer()
+        state["question_buffer"] = buffer
+
+    question_generator = QuestionGenerator(model, buffer=buffer)
+
+    return state, question_generator
 
 
 async def chat(
@@ -178,7 +190,7 @@ def process_unselect(state, c1, c2, c3, c4):
     return state
 
 
-def verify_input(language: str, language_proficiency: str, difficulty: str):
+def _verify_input(language: str, language_proficiency: str, difficulty: str):
     if language == "":
         raise gr.Error("No language was input. Please add one in the right sidebar.")
     if language_proficiency == "":
@@ -197,27 +209,27 @@ async def create_multiple_choice_questions(
     difficulty: str,
     additional_information: str,
 ):
-    verify_input(language, language_proficiency, difficulty)
+    _verify_input(language, language_proficiency, difficulty)
 
-    question_generator = QuestionGenerator(model)
+    state, question_generator = _get_question_generator(state, model)
 
-    question_data = await question_generator.generate_multiple_choice(
+    async for question_data in question_generator.generate_multiple_choice(
         language, language_proficiency, difficulty, additional_information
-    )
+    ):
+        state[QGT.QUESTION_ANSWER_INDEX] = question_data[QGT.QUESTION_ANSWER_INDEX]
 
-    state[QGT.QUESTION_ANSWER_INDEX] = question_data[QGT.QUESTION_ANSWER_INDEX]
+        options = question_data[QGT.QUESTION_OPTIONS]
 
-    options = question_data[QGT.QUESTION_OPTIONS]
+        question_text = f"{question_data[QGT.QUESTION_TEXT]}"
 
-    question_text = f"{question_data[QGT.QUESTION_TEXT]}"
-
-    return (
-        gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
-        gr.Checkbox(label=options[0], value=False, info=""),
-        gr.Checkbox(label=options[1], value=False, info=""),
-        gr.Checkbox(label=options[2], value=False, info=""),
-        gr.Checkbox(label=options[3], value=False, info=""),
-    )
+        yield (
+            state,
+            gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
+            gr.Checkbox(label=options[0], value=False, info=""),
+            gr.Checkbox(label=options[1], value=False, info=""),
+            gr.Checkbox(label=options[2], value=False, info=""),
+            gr.Checkbox(label=options[3], value=False, info=""),
+        )
 
 
 async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
@@ -253,22 +265,22 @@ async def create_free_text_question(
     difficulty: str,
     additional_information: str,
 ):
-    verify_input(language, language_proficiency, difficulty)
+    _verify_input(language, language_proficiency, difficulty)
 
-    question_generator = QuestionGenerator(model)
+    state, question_generator = _get_question_generator(state, model)
 
-    question_data = await question_generator.generate_free_text(
+    async for question_data in question_generator.generate_free_text(
         language, language_proficiency, difficulty, additional_information
-    )
+    ):
+        state[QGT.QUESTION_ANSWER] = question_data[QGT.QUESTION_ANSWER]
 
-    state[QGT.QUESTION_ANSWER] = question_data[QGT.QUESTION_ANSWER]
+        question_text = f"{question_data[QGT.QUESTION_TEXT]}"
 
-    question_text = f"{question_data[QGT.QUESTION_TEXT]}"
-
-    return (
-        gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
-        gr.Textbox(value="", info=""),
-    )
+        yield (
+            state,
+            gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
+            gr.Textbox(value="", info=""),
+        )
 
 
 async def verify_free_text_question(state: dict, answer: str):
@@ -302,20 +314,20 @@ async def create_translation_question(
     difficulty: str,
     additional_information: str,
 ):
-    verify_input(language, language_proficiency, difficulty)
+    _verify_input(language, language_proficiency, difficulty)
 
-    question_generator = QuestionGenerator(model)
+    state, question_generator = _get_question_generator(state, model)
 
-    question_data = await question_generator.generate_translation_question(
+    async for question_data in question_generator.generate_translation_question(
         language, language_proficiency, difficulty, additional_information
-    )
+    ):
+        question_text = f"{question_data[QGT.QUESTION_BASE_TEXT]}"
 
-    question_text = f"{question_data[QGT.QUESTION_BASE_TEXT]}"
-
-    return (
-        gr.Textbox(value=question_text),
-        gr.Textbox(value="", info=""),
-    )
+        yield (
+            state,
+            gr.Textbox(value=question_text),
+            gr.Textbox(value="", info=""),
+        )
 
 
 def append_to_chatbot_history(history: list, original: str, answer: str) -> list[dict]:
