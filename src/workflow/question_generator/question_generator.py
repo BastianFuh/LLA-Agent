@@ -17,7 +17,7 @@ class QuestionGenerator:
     def __init__(self, model: str):
         self.llm = utils.get_llm(model)
 
-    def get_agent(self, **kwargs) -> ReActAgent:
+    def _get_agent(self, **kwargs) -> ReActAgent:
         tools = [
             FunctionTool.from_defaults(QGT.create_base_text),
             FunctionTool.from_defaults(QGT.create_question_with_placholder),
@@ -80,7 +80,7 @@ class QuestionGenerator:
         difficulty: str,
         additional_information: str,
     ) -> Context:
-        agent = self.get_agent(
+        agent = self._get_agent(
             language=language,
             language_proficiency=language_proficiency,
             difficulty=difficulty,
