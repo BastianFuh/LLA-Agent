@@ -7,6 +7,7 @@ from llama_index.core.workflow import Context
 from llama_index.core.llms.function_calling import FunctionCallingLLM
 
 from workflow.question_generator import tools as QGT
+from workflow import question_generator
 
 from workflow import utils
 
@@ -17,8 +18,23 @@ class QuestionGenerator:
     def __init__(self, model: str):
         self.llm = utils.get_llm(model)
 
+    def _get_initial_message_prompt(self, question_type) -> str:
+        match question_type:
+            case question_generator.MULTI_CHOICE:
+                return prompts.INITIAL_MESSAGE_MULTIPLE_CHOICE
+
+            case question_generator.FREE_TEXT:
+                return prompts.INITIAL_MESSAGE_SIMPLE_FREE_TEXT
+
+            case question_generator.TRANSLATION:
+                return prompts.INITIAL_MESSAGE_TRANSLATION
+
+            case _:
+                raise ValueError("Unknown question type")
+
     def _get_agent(self, **kwargs) -> ReActAgent:
         tools = [
+            FunctionTool.from_defaults(QGT.finish, return_direct=True),
             FunctionTool.from_defaults(QGT.create_base_text),
             FunctionTool.from_defaults(QGT.create_question_with_placholder),
             FunctionTool.from_defaults(QGT.create_question_hint),
@@ -90,10 +106,10 @@ class QuestionGenerator:
         ctx = Context(agent)
         await ctx.set("question_type", question_type)
 
+        initial_message_prompt = self._get_initial_message_prompt(question_type)
+
         await agent.run(
-            prompts.QUESTION_GENERATOR_INITIAL_MESSAGE_PROMPT.format(
-                question_type=question_type
-            ),
+            initial_message_prompt,
             ctx=ctx,
         )
 
@@ -107,7 +123,7 @@ class QuestionGenerator:
         additional_information: str,
     ) -> dict:
         ctx = await self._run_agent(
-            "multiple_choice",
+            question_generator.MULTI_CHOICE,
             language,
             language_proficiency,
             difficulty,
@@ -132,7 +148,7 @@ class QuestionGenerator:
         additional_information: str,
     ) -> dict:
         ctx = await self._run_agent(
-            "free_text",
+            question_generator.FREE_TEXT,
             language,
             language_proficiency,
             difficulty,
@@ -156,7 +172,7 @@ class QuestionGenerator:
         additional_information: str,
     ) -> dict:
         ctx = await self._run_agent(
-            "translation",
+            question_generator.TRANSLATION,
             language,
             language_proficiency,
             difficulty,

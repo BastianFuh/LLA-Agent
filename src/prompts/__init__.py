@@ -70,3 +70,36 @@ CHATBOT_FUNCTION_PROMPT = (
     .open("r", encoding="utf-8")
     .read()
 )
+
+INITIAL_MESSAGE_MULTIPLE_CHOICE = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("multiple_choice")
+        / Path("initial_message.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)
+
+INITIAL_MESSAGE_SIMPLE_FREE_TEXT = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("simple_free_text")
+        / Path("initial_message.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)
+
+INITIAL_MESSAGE_TRANSLATION = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("translation")
+        / Path("initial_message.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)

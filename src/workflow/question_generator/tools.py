@@ -2,6 +2,8 @@ from typing import Literal
 from llama_index.core.workflow import Context
 import random
 
+import workflow.question_generator as question_generator
+
 QUESTION_BASE_TEXT = "question_base_text"
 QUESTION_TEXT = "question_text"
 QUESTION_OPTIONS = "question_options"
@@ -19,6 +21,15 @@ You have started the question generation with this text:
 
 Now you must take the generated text and replace a word from it with the placeholder token: "___". You also must generate the correct answer.
 """
+
+
+async def finish() -> str:
+    """This function is used to finish the current process or operation.
+
+    Returns:
+        str: Return information.
+    """
+    return "The process was finished."
 
 
 async def create_base_text(context: Context, potential_texts: list[str]) -> str:
@@ -47,7 +58,7 @@ async def create_base_text(context: Context, potential_texts: list[str]) -> str:
     question_type = await context.get("question_type")
 
     match question_type:
-        case "translation":
+        case question_generator.TRANSLATION:
             return "You have done everything you can now finish up."
         case _:
             return _CREATE_BASE_TEXT_INSTRUCTION.format(text=text)
@@ -104,7 +115,7 @@ async def create_question_hint(context: Context, hint: str) -> str:
     question_type = await context.get("question_type")
 
     match question_type:
-        case "multiple_choice":
+        case question_generator.MULTI_CHOICE:
             return "You must now generate the incorrect options for the question type."
 
         case _:

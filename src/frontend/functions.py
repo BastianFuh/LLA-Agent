@@ -4,7 +4,7 @@ from workflow.events import LLMProgressEvent
 
 from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
 from workflow.events import ChatBotStartEvent, AudioStreamEvent
-from workflow.question_generator.question_generator import QuestionGenerator
+from workflow.question_generator.base import QuestionGenerator
 from workflow.question_generator import tools as QGT
 
 from util import const
