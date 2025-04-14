@@ -82,19 +82,43 @@ class QuestionGenerator:
             case question_generator.TRANSLATION:
                 return prompts.INITIAL_MESSAGE_TRANSLATION
 
+            case question_generator.READING_COMPREHENSION:
+                return prompts.INITIAL_MESSAGE_READING_COMPREHENSION
+
             case _:
                 raise ValueError("Unknown question type")
 
-    def _get_agent(self, **kwargs) -> ReActAgent:
+    def _get_agent(self, key: str, **kwargs) -> ReActAgent:
         tools = [
             FunctionTool.from_defaults(QGT.finish, return_direct=True),
-            FunctionTool.from_defaults(QGT.create_base_text),
-            FunctionTool.from_defaults(QGT.create_question_with_placholder),
-            FunctionTool.from_defaults(QGT.create_question_hint),
-            FunctionTool.from_defaults(
-                QGT.create_multiple_choice_question_incorrect_options
-            ),
         ]
+
+        if key in [
+            question_generator.MULTI_CHOICE,
+            question_generator.FREE_TEXT,
+            question_generator.TRANSLATION,
+        ]:
+            tools.append(FunctionTool.from_defaults(QGT.create_base_text))
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_question_with_placholder),
+            )
+            tools.append(FunctionTool.from_defaults(QGT.create_question_hint))
+            tools.append(
+                FunctionTool.from_defaults(
+                    QGT.create_multiple_choice_question_incorrect_options
+                )
+            )
+
+        if key in [question_generator.READING_COMPREHENSION]:
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_reading_comprehension_topic)
+            )
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_reading_comprehension_text)
+            )
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_reading_comprehension_question)
+            )
 
         if isinstance(self.llm, FunctionCallingLLM):
             prompt = (
@@ -150,6 +174,7 @@ class QuestionGenerator:
         additional_information: str,
     ) -> Context:
         agent = self._get_agent(
+            question_type,
             language=language,
             language_proficiency=language_proficiency,
             difficulty=difficulty,
@@ -213,6 +238,21 @@ class QuestionGenerator:
             additional_information,
         )
 
+    def generate_reading_comprehension(
+        self,
+        language: str,
+        language_proficiency: str,
+        difficulty: str,
+        additional_information: str,
+    ) -> AsyncGenerator[dict, None]:
+        return self._generate_question(
+            question_generator.READING_COMPREHENSION,
+            language,
+            language_proficiency,
+            difficulty,
+            additional_information,
+        )
+
     async def _handle_agent_result(self, ctx: Context, key: str) -> dict:
         match key:
             case question_generator.MULTI_CHOICE:
@@ -235,6 +275,19 @@ class QuestionGenerator:
             case question_generator.TRANSLATION:
                 return {
                     QGT.QUESTION_BASE_TEXT: await ctx.get(QGT.QUESTION_BASE_TEXT),
+                }
+
+            case question_generator.READING_COMPREHENSION:
+                return {
+                    QGT.READING_COMPREHENSION_TOPIC: await ctx.get(
+                        QGT.READING_COMPREHENSION_TOPIC
+                    ),
+                    QGT.READING_COMPREHENSION_TEXT: await ctx.get(
+                        QGT.READING_COMPREHENSION_TEXT
+                    ),
+                    QGT.READING_COMPREHENSION_QUESTION: await ctx.get(
+                        QGT.READING_COMPREHENSION_QUESTION
+                    ),
                 }
 
             case _:

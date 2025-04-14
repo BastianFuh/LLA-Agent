@@ -1,4 +1,3 @@
-from typing import Literal
 from llama_index.core.workflow import Context
 import random
 
@@ -11,8 +10,11 @@ QUESTION_ANSWER = "question_answer"
 QUESTION_ANSWER_INDEX = "question_answer_index"
 QUESTION_HINT = "question_hint"
 
+READING_COMPREHENSION_TOPIC = "reading_comprehension_topic"
+READING_COMPREHENSION_TEXT = "reading_comprehension_text"
+READING_COMPREHENSION_QUESTION = "reading_comprehension_question"
 
-_CREATE_BASE_TEXT_INSTRUCTION = """
+_CREATE_QUESTION_BASE_TEXT_INSTRUCTION = """
 You have started the question generation with this text:
 
 ```
@@ -20,6 +22,15 @@ You have started the question generation with this text:
 ```
 
 Every following step MUST ensure that the question is about {focus}.
+
+"""
+
+_CREATE_READING_COMPREHENSION_BASE_TEXT_INSTRUCTION = """
+You have started the generation with this text:
+
+```
+{text}
+```
 
 """
 
@@ -58,7 +69,7 @@ async def create_base_text(
         return 'Your respons includes the placeholder marker "___". Please repeat this step and ensure not to include "___" in any option.'
 
     # Select one option
-    option = potential_texts[random.randint(3, len(potential_texts) - 1)]
+    option = potential_texts[random.randint(0, len(potential_texts) - 1)]
 
     await context.set(QUESTION_BASE_TEXT, option[0])
 
@@ -68,7 +79,9 @@ async def create_base_text(
         case question_generator.TRANSLATION:
             return "You have done everything you can now finish up."
         case _:
-            return _CREATE_BASE_TEXT_INSTRUCTION.format(text=option[0], focus=option[1])
+            return _CREATE_QUESTION_BASE_TEXT_INSTRUCTION.format(
+                text=option[0], focus=option[1]
+            )
 
 
 async def create_question_with_placholder(
@@ -158,3 +171,63 @@ async def create_multiple_choice_question_incorrect_options(
     await context.set(QUESTION_ANSWER_INDEX, answer_index)
 
     return "You have done everything you can now finish up."
+
+
+async def create_reading_comprehension_topic(
+    context: Context, topics: list[str]
+) -> str:
+    """Creates a topic of a reading comprehension problem.
+
+    It takes a list of potential topics from which one will be selected.
+    The topics should be diverse and different from each other.
+
+    Args:
+        context (Context): context
+        topics (list[str]): List of potential topics. Should contain atleast 5 elements.
+
+    Returns:
+        str: Tool response
+    """
+    if len(topics) < 5:
+        return "Please ensure that the topics list contains atleast 5 options."
+
+    topic = topics[random.randint(0, len(topics) - 1)]
+
+    await context.set(READING_COMPREHENSION_TOPIC, topic)
+
+    return _CREATE_READING_COMPREHENSION_BASE_TEXT_INSTRUCTION.format(text=topic)
+
+
+async def create_reading_comprehension_text(context: Context, text: str) -> str:
+    """Create the text for the choosen topic.
+
+    The generated text should be relevant to the topic.
+    It MUST NOT add the topic at the beginning of the text.
+
+    Args:
+        context (Context): context
+        text (str): The text for the given topic.
+
+    Returns:
+        str: Tool response
+    """
+
+    await context.set(READING_COMPREHENSION_TEXT, text)
+
+    return "Now generate a question for the given text."
+
+
+async def create_reading_comprehension_question(context: Context, question: str) -> str:
+    """Create a question for give reading comprehension problem.
+
+    Args:
+        context (Context): context
+        question (str): The question based on the topic and text.
+
+    Returns:
+        str: Tool response
+    """
+
+    await context.set(READING_COMPREHENSION_QUESTION, question)
+
+    return "The process is now finished."

@@ -103,3 +103,48 @@ INITIAL_MESSAGE_TRANSLATION = (
     .open("r", encoding="utf-8")
     .read()
 )
+
+
+INITIAL_MESSAGE_READING_COMPREHENSION = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("reading_comprehension")
+        / Path("initial_message.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)
+
+READING_COMPREHENSION_REQUEST_PROMPT = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("reading_comprehension")
+        / Path("input.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)
+
+READING_COMPREHENSION_FUNCTION_CHATBOT_PROMPT = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("reading_comprehension")
+        / Path("function_base_translation.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)
+
+READING_COMPREHENSION_REACT_CHATBOT_PROMPT = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("reading_comprehension")
+        / Path("react_base_translation.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)

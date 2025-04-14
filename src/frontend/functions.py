@@ -104,6 +104,14 @@ def _create_translation_user_message(original: str, answer: str):
     )
 
 
+def _create_reading_comprehension_user_message(
+    topic: str, text: str, question: str, answer: str
+):
+    return prompts.READING_COMPREHENSION_REQUEST_PROMPT.format(
+        topic=topic, text=text, question=question, answer=answer
+    )
+
+
 async def translation_verifier_chat(
     message: str,
     history: list,
@@ -114,16 +122,40 @@ async def translation_verifier_chat(
     search_engine: str,
 ):
     async for event in translation_verifier(
-        message,
-        history,
         None,
+        history,
+        message,
         is_stream,
         audio_output,
         model,
         embedding_model,
         search_engine,
     ):
-        yield event
+        yield event, ""
+
+
+async def reading_comprehension_chat(
+    message: str,
+    history: list,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
+):
+    async for event in reading_comprehension_verifier(
+        message,
+        None,
+        None,
+        None,
+        history,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+    ):
+        yield event, ""
 
 
 async def translation_verifier(
@@ -146,6 +178,11 @@ async def translation_verifier(
     else:
         user_message = _create_translation_user_message(original, answer)
 
+    # Update shown history
+    current_history = history.copy()
+    current_history.append({"role": "user", "content": user_message})
+    yield current_history
+
     async for event in chat(
         user_message,
         history,
@@ -157,9 +194,58 @@ async def translation_verifier(
         chat_prompts,
     ):
         if isinstance(event, str):
-            history.append({"role": "assistant", "content": event})
+            current_history.append({"role": "assistant", "content": event})
 
-            yield history
+            yield current_history
+        else:
+            logging.warning(
+                "Translation chat got an event which is currently not supported"
+            )
+
+
+async def reading_comprehension_verifier(
+    topic: str,
+    text: str,
+    question: str,
+    answer: str,
+    history: list,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
+):
+    chat_prompts = {
+        "function": prompts.READING_COMPREHENSION_FUNCTION_CHATBOT_PROMPT,
+        "react": prompts.READING_COMPREHENSION_REACT_CHATBOT_PROMPT,
+    }
+
+    if answer is None:
+        user_message = topic
+    else:
+        user_message = _create_reading_comprehension_user_message(
+            topic, text, question, answer
+        )
+
+    # Update shown history
+    current_history = history.copy()
+    current_history.append({"role": "user", "content": user_message})
+    yield current_history
+
+    async for event in chat(
+        user_message,
+        history,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+        chat_prompts,
+    ):
+        if isinstance(event, str):
+            current_history.append({"role": "assistant", "content": event})
+
+            yield current_history
         else:
             logging.warning(
                 "Translation chat got an event which is currently not supported"
@@ -330,10 +416,29 @@ async def create_translation_question(
         )
 
 
-def append_to_chatbot_history(history: list, original: str, answer: str) -> list[dict]:
-    if answer is None:
-        message = original
-    else:
-        message = _create_translation_user_message(original, answer)
-    history.append({"role": "user", "content": message})
-    return history, ""
+async def create_reading_comprehension_question(
+    state: gr.State,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    _verify_input(language, language_proficiency, difficulty)
+
+    state, question_generator = _get_question_generator(state, model)
+
+    async for question_data in question_generator.generate_reading_comprehension(
+        language, language_proficiency, difficulty, additional_information
+    ):
+        topic = f"{question_data[QGT.READING_COMPREHENSION_TOPIC]}"
+        text = f"{question_data[QGT.READING_COMPREHENSION_TEXT]}"
+        question = f"{question_data[QGT.READING_COMPREHENSION_QUESTION]}"
+
+        yield (
+            state,
+            gr.Textbox(value=topic),
+            gr.TextArea(value=text),
+            gr.Textbox(value=question),
+            gr.Textbox(value="", info=""),
+        )
