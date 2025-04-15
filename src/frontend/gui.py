@@ -1,7 +1,14 @@
 import gradio as gr
 import frontend.functions as F
 
-from util.const import OPTION_MODEL, OPTION_SEARCH_ENGINE, OPTION_EMBEDDING
+from util.const import (
+    OPTION_MODEL,
+    OPTION_SEARCH_ENGINE,
+    OPTION_EMBEDDING,
+    TTS_OPENAI,
+    TTS_ELEVENLABS,
+    TTS_KOKORO,
+)
 
 import os
 
@@ -55,6 +62,13 @@ def create_gui() -> gr.Blocks:
                 OPTION_SEARCH_ENGINE,
                 "option_search_engine",
                 "Search Engine",
+            )
+
+            tts_provider = create_dropdown_input(
+                browser_state,
+                [TTS_KOKORO, TTS_ELEVENLABS, TTS_OPENAI],
+                "tts_provider",
+                "TTS Provider",
             )
 
             is_stream = create_checkbox_input(
@@ -133,6 +147,7 @@ def create_gui() -> gr.Blocks:
                 model,
                 embedding_model,
                 search_engine,
+                tts_provider,
                 language,
                 language_proficiency,
                 difficulty,
@@ -509,6 +524,7 @@ def create_reading_comprehension_question(
     model,
     embedding_model,
     search_engine,
+    tts_provider,
     language,
     language_proficiency,
     difficulty,
@@ -521,42 +537,48 @@ def create_reading_comprehension_question(
             with gr.Column():
                 topic = gr.Textbox(
                     "",
-                    label="topic",
-                    container=False,
+                    label="Topic",
                     lines=1,
-                    interactive=False,
+                    interactive=True,
                     show_copy_button=True,
                 )
 
-                with gr.Column():
-                    text = gr.TextArea(
-                        label="Text",
-                        interactive=False,
-                        show_copy_button=True,
-                    )
-                    question = gr.Textbox(
-                        label="Question",
-                        interactive=False,
-                        show_copy_button=True,
-                    )
-                    answer = gr.TextArea(label="Answer", lines=3)
-
-                with gr.Row():
-                    question_create_button = gr.Button("Next")
-                    question_submit_button = gr.Button("Submit")
-
-                question_create_button.click(
-                    F.create_reading_comprehension_question,
-                    [
-                        create_state,
-                        model,
-                        language,
-                        language_proficiency,
-                        difficulty,
-                        additional_information,
-                    ],
-                    [create_state, topic, text, question, answer],
+                text = gr.TextArea(
+                    label="Text",
+                    interactive=True,
+                    lines=11,
+                    show_copy_button=True,
+                    autoscroll=True,
                 )
+
+                question_create_button = gr.Button("Next")
+            with gr.Column():
+                question = gr.Textbox(
+                    label="Question",
+                    interactive=False,
+                    show_copy_button=True,
+                )
+                answer = gr.TextArea(
+                    label="Answer",
+                    lines=3,
+                )
+
+                question_submit_button = gr.Button("Submit")
+
+                create_audio_output(tts_provider, topic, text, question)
+
+            question_create_button.click(
+                F.create_reading_comprehension_question,
+                [
+                    create_state,
+                    model,
+                    language,
+                    language_proficiency,
+                    difficulty,
+                    additional_information,
+                ],
+                [create_state, topic, text, question, answer],
+            )
 
         chatbot = gr.Chatbot(
             type="messages",
@@ -600,4 +622,18 @@ def create_reading_comprehension_question(
                 search_engine,
             ],
             outputs=[chatbot],
+        )
+
+
+def create_audio_output(tts_provider, language, *text_input_elements):
+    with gr.Column():
+        audio_player = gr.Audio(
+            interactive=False, scale=4, type="numpy", streaming=True
+        )
+        generate_button = gr.Button("Generate Audio", scale=1)
+
+        generate_button.click(
+            fn=F.create_audio,
+            inputs=[tts_provider, language] + list(text_input_elements),
+            outputs=[audio_player],
         )

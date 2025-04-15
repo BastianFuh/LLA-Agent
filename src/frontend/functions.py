@@ -1,19 +1,19 @@
-from llama_index.core.workflow import Context
-
-from workflow.events import LLMProgressEvent
-
-from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
-from workflow.events import ChatBotStartEvent, AudioStreamEvent
-from workflow.question_generator.base import QuestionGenerator, QuestionBuffer
-from workflow.question_generator import tools as QGT
-
-from util import const
+import logging
+import random
 
 import gradio as gr
+import numpy as np
+from elevenlabs import ElevenLabs
+from kokoro import KPipeline
+from llama_index.core.workflow import Context
+from openai import AsyncOpenAI
 
 import prompts
-
-import logging
+from util import const
+from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
+from workflow.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
+from workflow.question_generator import tools as QGT
+from workflow.question_generator.base import QuestionBuffer, QuestionGenerator
 
 
 def _get_question_generator(state: dict, model: str):
@@ -30,13 +30,13 @@ def _get_question_generator(state: dict, model: str):
 
 async def chat(
     message: str,
-    history: dict,
+    history: list,
     is_stream: bool,
     audio_output: bool,
     model: str,
     embedding_model: str,
     search_engine: str,
-    prompt: str | dict[str, str] = None,
+    prompt: str | dict[str, str] | None = None,
 ):
     try:
         workflow = ChatBotWorkfLow(
@@ -159,7 +159,7 @@ async def reading_comprehension_chat(
 
 
 async def translation_verifier(
-    answer: str,
+    answer: str | None,
     history: list,
     original: str | None,
     is_stream: bool,
@@ -442,3 +442,79 @@ async def create_reading_comprehension_question(
             gr.Textbox(value=question),
             gr.Textbox(value="", info=""),
         )
+
+
+async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
+    output_text = args[0]
+    for arg in args[1:]:
+        # The added dots should results in breaks during speaking
+        output_text += ". " + arg
+
+    if tts_provider == const.TTS_KOKORO:
+        pipeline = KPipeline(lang_code="j")
+        generator = pipeline(
+            output_text,
+            voice="jf_alpha",  # <= change voice here
+            speed=1,
+            split_pattern=r"(\.|。|!|\?|！|？|、)",
+        )
+        for gs, ps, audio in generator:
+            yield (24000, audio.numpy())
+
+    if tts_provider == const.TTS_ELEVENLABS:
+        from io import BytesIO
+
+        client = ElevenLabs()
+
+        audio = client.text_to_speech.convert(
+            text=output_text,
+            voice_id="GxxMAMfQkDlnqjpzjLHH",
+            model_id="eleven_flash_v2_5",
+            output_format="pcm_24000",
+        )
+
+        stream = BytesIO()
+
+        for chunk in audio:
+            if chunk:
+                stream.write(chunk)
+        stream.seek(0)
+
+        # return_audio = np.frombuffer(audio, dtype=np.int16)
+        yield (24000, np.frombuffer(stream.getbuffer(), dtype=np.int16))
+
+    if tts_provider == const.TTS_OPENAI:
+        voices = [
+            "alloyash",
+            "ballad",
+            "coral",
+            "echo",
+            "fable",
+            "onyx",
+            "nova",
+            "sage",
+            "shimmer",
+            "verse",
+        ]
+
+        instructions = f"""Language: Speak in {language} with a standard accent.
+
+                    Voice Affect: Composed; project authority and confidence.
+
+                    Tone: Sincere and authoritative—express genuine apology while conveying competence.
+
+                    Pacing: Steady and moderate.
+
+                    Pronunciation: Clear and precise."""
+
+        client = AsyncOpenAI()
+        response = await client.audio.speech.create(
+            model="gpt-4o-mini-tts",
+            voice=voices[random.randint(0, len(voices) - 1)],
+            input=output_text,
+            instructions=instructions,
+            response_format="pcm",
+        )
+        return_audio = np.frombuffer(response.content, dtype=np.int16)
+
+        yield (24000, return_audio)

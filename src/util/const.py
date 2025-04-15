@@ -42,6 +42,8 @@ OPTION_MODEL: OptionType = {
         PROVIDER_OPENROUTER,
     ),
     "OpenAI: GPT-4o-mini": ("gpt-4o-mini-2024-07-18", PROVIDER_OPENAI),
+    "OpenAI: GPT-4.1 mini": ("gpt-4.1-mini-2025-04-14", PROVIDER_OPENAI),
+    "OpenAI: GPT-4.1 nano": ("gpt-4.1-nano-2025-04-14", PROVIDER_OPENAI),
 }
 
 OPTION_EMBEDDING: OptionType = [
@@ -56,3 +58,8 @@ NONE = "none"
 GOOGLE = "google"
 TAVILY = "tavily"
 OPTION_SEARCH_ENGINE = [("Google", GOOGLE), ("Tavily", TAVILY), ("None", NONE)]
+
+
+TTS_OPENAI = "TTS Openai"
+TTS_KOKORO = "TTS Kokoro (local)"
+TTS_ELEVENLABS = "TTS Elevenlabs"

@@ -3,3 +3,7 @@ mlruns/
 
 test.py
 *.prof
+
+*.wav
+
+settings.json
