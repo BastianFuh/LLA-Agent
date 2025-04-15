@@ -1,7 +1,10 @@
+# grequest needs to be up here
+# If not it breaks some request for some reason...
+# Might be fixed by removing it in the file it is used
+import grequests
 import logging
 
 import gradio as gr
-import grequests
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
