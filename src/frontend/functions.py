@@ -450,14 +450,19 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
         # The added dots should results in breaks during speaking
         output_text += ". " + arg
 
+    # Clear current audio
+    yield gr.Audio(value=None, streaming=False)
+
     if tts_provider == const.TTS_KOKORO:
-        pipeline = KPipeline(lang_code="j")
+        yield gr.Audio(value=None, streaming=True)
+        pipeline = KPipeline(lang_code="j", repo_id="hexgrad/Kokoro-82M")
         generator = pipeline(
             output_text,
             voice="jf_alpha",  # <= change voice here
             speed=1,
             split_pattern=r"(\.|。|!|\?|！|？|、)",
         )
+
         for gs, ps, audio in generator:
             yield (24000, audio.numpy())
 
@@ -518,3 +523,6 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
         return_audio = np.frombuffer(response.content, dtype=np.int16)
 
         yield (24000, return_audio)
+    # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
+    # being yielded
+    yield (24000, np.zeros(2400))

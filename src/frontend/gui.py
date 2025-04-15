@@ -132,6 +132,7 @@ def create_gui() -> gr.Blocks:
                 model,
                 embedding_model,
                 search_engine,
+                tts_provider,
                 language,
                 language_proficiency,
                 difficulty,
@@ -434,6 +435,7 @@ def create_translation_question(
     model,
     embedding_model,
     search_engine,
+    tts_provider,
     language,
     language_proficiency,
     difficulty,
@@ -472,6 +474,8 @@ def create_translation_question(
                     ],
                     [create_state, question_text, answer_box],
                 )
+
+                create_audio_output(tts_provider, language, question_text)
 
         chatbot = gr.Chatbot(
             type="messages",
