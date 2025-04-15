@@ -1,16 +1,16 @@
-import gradio as gr
-import frontend.functions as F
+import os
 
+import gradio as gr
+
+import frontend.functions as F
 from util.const import (
+    OPTION_EMBEDDING,
     OPTION_MODEL,
     OPTION_SEARCH_ENGINE,
-    OPTION_EMBEDDING,
-    TTS_OPENAI,
     TTS_ELEVENLABS,
     TTS_KOKORO,
+    TTS_OPENAI,
 )
-
-import os
 
 
 def create_gui() -> gr.Blocks:

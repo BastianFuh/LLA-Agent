@@ -1,37 +1,26 @@
+import logging
+
 import numpy as np
-
-from llama_index.core.workflow import (
-    StopEvent,
-    Workflow,
-    Context,
-    step,
-)
-from llama_index.core.base.llms.types import ChatMessage
-
 from llama_index.core.agent.react import ReActChatFormatter
-from llama_index.core.agent.workflow import ReActAgent, FunctionAgent
-from llama_index.core.llms.function_calling import FunctionCallingLLM
-
+from llama_index.core.agent.workflow import FunctionAgent, ReActAgent
 from llama_index.core.agent.workflow.workflow_events import AgentStream
-
+from llama_index.core.base.llms.types import ChatMessage
+from llama_index.core.llms.function_calling import FunctionCallingLLM
+from llama_index.core.workflow import Context, StopEvent, Workflow, step
 from openai import AsyncOpenAI
 
+import prompts
+from util import const
+from workflow import utils as w_utils
 from workflow.events import (
-    ChatBotStartEvent,
-    LLMStartEvent,
-    LLMProgressEvent,
-    LLMFinishedEvent,
     AudioFinishedEvent,
     AudioStartEvent,
     AudioStreamEvent,
+    ChatBotStartEvent,
+    LLMFinishedEvent,
+    LLMProgressEvent,
+    LLMStartEvent,
 )
-
-from util import const
-from workflow import utils as w_utils
-
-import logging
-
-import prompts
 
 
 def build_message(message: str, history: list[dict]):
@@ -49,7 +38,7 @@ def build_message(message: str, history: list[dict]):
 
 
 class ChatBotWorkfLow(Workflow):
-    def __init__(self, prompt: str | dict[str, str] = None, **kwargs):
+    def __init__(self, prompt: str | dict[str, str] | None = None, **kwargs):
         super().__init__(**kwargs)
         self.prompt = prompt
 

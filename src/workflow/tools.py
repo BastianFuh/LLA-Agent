@@ -1,22 +1,17 @@
-import grequests
-
-import os
 import json
-
 import logging
-
+import os
 import traceback
-import html2text
-
 from typing import List, Optional
-from llama_index.tools.google import GoogleSearchToolSpec
-from llama_index.tools.tavily_research import TavilyToolSpec
-from llama_index.core import VectorStoreIndex
 
-from llama_index.core import Settings
+import grequests
+import html2text
+from llama_index.core import Settings, VectorStoreIndex
+from llama_index.core.schema import Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.openai import OpenAI
-from llama_index.core.schema import Document
+from llama_index.tools.google import GoogleSearchToolSpec
+from llama_index.tools.tavily_research import TavilyToolSpec
 
 
 def load_webpages(urls: List[str]):

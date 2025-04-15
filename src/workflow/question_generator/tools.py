@@ -1,5 +1,6 @@
-from llama_index.core.workflow import Context
 import random
+
+from llama_index.core.workflow import Context
 
 import workflow.question_generator as question_generator
 

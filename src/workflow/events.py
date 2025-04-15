@@ -1,5 +1,5 @@
-from llama_index.core.workflow import Event, StartEvent
 import numpy as np
+from llama_index.core.workflow import Event, StartEvent
 
 
 class ChatBotStartEvent(StartEvent):

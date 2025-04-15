@@ -1,14 +1,11 @@
-import grequests
-from frontend.gui import create_gui
-
 import logging
 
+import gradio as gr
+import grequests
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
-
 from phoenix.otel import register
 
-import gradio as gr
-
+from frontend.gui import create_gui
 
 if __name__ == "__main__":
     tracer_provider = register(project_name="LLA-Agent", batch=True, verbose=False)
