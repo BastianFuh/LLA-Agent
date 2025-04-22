@@ -1,6 +1,7 @@
 import os
 
 import gradio as gr
+from matplotlib.pyplot import sca
 
 import frontend.functions as F
 from util.const import (
@@ -287,14 +288,15 @@ def create_multiple_choice_questions(
                     container=False,
                     lines=1,
                     interactive=False,
+                    placeholder="Your question will be generated here",
                 )
 
                 with gr.Column():
                     question_options = [
-                        gr.Checkbox(label=""),
-                        gr.Checkbox(label=""),
-                        gr.Checkbox(label=""),
-                        gr.Checkbox(label=""),
+                        gr.Checkbox(label="Answer 1"),
+                        gr.Checkbox(label="Answer 2"),
+                        gr.Checkbox(label="Answer 3"),
+                        gr.Checkbox(label="Answer 4"),
                     ]
 
                     for checkbox in question_options:
@@ -309,8 +311,12 @@ def create_multiple_choice_questions(
                         )
 
                 with gr.Row():
-                    question_create_button = gr.Button("Next")
-                    question_submit_button = gr.Button("Submit")
+                    question_create_button = gr.Button(
+                        "Next", elem_classes="next-button", scale=1
+                    )
+                    question_submit_button = gr.Button(
+                        "Submit", elem_classes="submit-custom-button", scale=2
+                    )
 
                 question_create_button.click(
                     F.create_multiple_choice_questions,
@@ -371,18 +377,27 @@ def create_free_text_questions(
                 question_text = gr.TextArea(
                     "",
                     label="Question",
+                    placeholder="Your question will be generated here",
                     container=False,
                     lines=1,
                     interactive=False,
                 )
 
-                with gr.Column():
-                    answer_box = gr.Textbox(label="Answer")
+                with gr.Row():
+                    answer_box = gr.Textbox(
+                        label="Answer",
+                        placeholder="Type your answer...",
+                        scale=4,
+                        submit_btn=True,
+                    )
 
                 with gr.Row():
-                    question_create_button = gr.Button("Next")
-                    question_submit_button = gr.Button("Submit")
-                    question_show_answer = gr.Button("Show Answer")
+                    question_create_button = gr.Button(
+                        "Next", elem_classes="next-button", scale=1
+                    )
+                    question_show_answer = gr.Button(
+                        "Show Answer", elem_classes="show-answer-button", scale=1
+                    )
 
                 question_create_button.click(
                     F.create_free_text_question,
@@ -398,7 +413,7 @@ def create_free_text_questions(
                 )
 
                 gr.on(
-                    triggers=[question_submit_button.click, answer_box.submit],
+                    triggers=[answer_box.submit],
                     fn=F.verify_free_text_question,
                     inputs=[create_state, answer_box],
                     outputs=[answer_box],
@@ -449,6 +464,7 @@ def create_translation_question(
                 question_text = gr.TextArea(
                     "",
                     label="Question",
+                    placeholder="Your question will be generated here",
                     container=False,
                     lines=1,
                     interactive=False,
@@ -456,11 +472,17 @@ def create_translation_question(
                 )
 
                 with gr.Column():
-                    answer_box = gr.Textbox(label="Answer")
+                    answer_box = gr.Textbox(
+                        label="Answer",
+                        submit_btn=True,
+                        placeholder="Type your answer...",
+                    )
+                    # question_submit_button = answer_box.submit_btn
 
                 with gr.Row():
-                    question_create_button = gr.Button("Next")
-                    question_submit_button = gr.Button("Submit")
+                    question_create_button = gr.Button(
+                        "Next", elem_classes="next-button", scale=1
+                    )
 
                 question_create_button.click(
                     F.create_translation_question,
@@ -504,7 +526,7 @@ def create_translation_question(
         )
 
         gr.on(
-            triggers=[question_submit_button.click, answer_box.submit],
+            triggers=[answer_box.submit],
             fn=F.translation_verifier,
             inputs=[
                 answer_box,
@@ -538,38 +560,45 @@ def create_reading_comprehension_question(
         scale=1,
     ):
         with gr.Row():
-            with gr.Column():
+            with gr.Column(variant="panel"):
                 topic = gr.Textbox(
                     "",
                     label="Topic",
+                    placeholder="The topic of the text",
+                    container=False,
                     lines=1,
-                    interactive=True,
-                    show_copy_button=True,
+                    interactive=False,
                 )
 
                 text = gr.TextArea(
                     label="Text",
-                    interactive=True,
+                    placeholder="The text of the reading comprehension",
+                    container=False,
+                    interactive=False,
                     lines=11,
-                    show_copy_button=True,
                     autoscroll=True,
                 )
 
-                question_create_button = gr.Button("Next")
+                question_create_button = gr.Button("Next", elem_classes="next-button")
             with gr.Column():
                 question = gr.Textbox(
                     label="Question",
+                    placeholder="Your question will be generated here",
                     interactive=False,
                     show_copy_button=True,
                 )
                 answer = gr.TextArea(
                     label="Answer",
+                    placeholder="Type your answer...",
                     lines=3,
+                    submit_btn=True,
                 )
 
-                question_submit_button = gr.Button("Submit")
+                # question_submit_button = gr.Button(
+                #    "Submit", elem_classes="submit-custom-button"
+                # )
 
-                create_audio_output(tts_provider, topic, text, question)
+                create_audio_output(tts_provider, language, topic, text, question)
 
             question_create_button.click(
                 F.create_reading_comprehension_question,
@@ -611,7 +640,7 @@ def create_reading_comprehension_question(
         )
 
         gr.on(
-            triggers=[question_submit_button.click, answer.submit],
+            triggers=[answer.submit],
             fn=F.reading_comprehension_verifier,
             inputs=[
                 topic,
