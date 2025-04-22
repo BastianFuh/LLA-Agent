@@ -317,6 +317,8 @@ async def create_multiple_choice_questions(
             gr.Checkbox(label=options[3], value=False, info=""),
         )
 
+    yield gr.skip()
+
 
 async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
     options = [c1, c2, c3, c4]
@@ -368,6 +370,8 @@ async def create_free_text_question(
             gr.Textbox(value="", info=""),
         )
 
+    yield gr.skip()
+
 
 async def verify_free_text_question(state: dict, answer: str):
     if not state.__contains__(QGT.QUESTION_ANSWER):
@@ -415,6 +419,8 @@ async def create_translation_question(
             gr.Textbox(value="", info=""),
         )
 
+    yield gr.skip()
+
 
 async def create_reading_comprehension_question(
     state: gr.State,
@@ -442,6 +448,8 @@ async def create_reading_comprehension_question(
             gr.Textbox(value=question),
             gr.Textbox(value="", info=""),
         )
+
+    yield gr.skip()
 
 
 async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
@@ -490,7 +498,7 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
 
     if tts_provider == const.TTS_OPENAI:
         voices = [
-            "alloyash",
+            "alloy",
             "ballad",
             "coral",
             "echo",
