@@ -1,6 +1,7 @@
 from llama_index.core.tools import FunctionTool
 from llama_index.core.workflow import Context
-from llama_index.llms.openai import AsyncOpenAI, OpenAI
+from llama_index.llms.openai import OpenAI
+from llama_index.llms.deepseek import DeepSeek
 from llama_index.llms.openrouter import OpenRouter
 
 from util import const
@@ -31,17 +32,27 @@ async def get_llms_tools(ctx: Context) -> list:
     return llm_tools
 
 
-def get_llm(model: str):
+def get_llm(model: str, temperature=1.2, max_tokens=1024):
     model_information = const.OPTION_MODEL[model]
+
+    model_name = model_information[0]
 
     match model_information[1]:
         case const.PROVIDER_DEEPSEEK:
-            raise NotImplementedError
+            return DeepSeek(
+                model=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                is_function_calling_model=True,
+                is_chat_model=True,
+            )
         case const.PROVIDER_OPENAI:
-            return OpenAI(model=model_information[0], temperature=1, max_tokens=1024)
+            return OpenAI(
+                model=model_name, temperature=temperature, max_tokens=max_tokens
+            )
         case const.PROVIDER_OPENROUTER:
             return OpenRouter(
-                model=model_information[0], temperature=1, max_tokens=1024
+                model=model_name, temperature=temperature, max_tokens=max_tokens
             )
         case _:
             raise ValueError("Unknown Provider")
