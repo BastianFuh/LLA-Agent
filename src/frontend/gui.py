@@ -1,7 +1,6 @@
 import os
 
 import gradio as gr
-from matplotlib.pyplot import sca
 
 import frontend.functions as F
 from util.const import (
@@ -484,19 +483,6 @@ def create_translation_question(
                         "Next", elem_classes="next-button", scale=1
                     )
 
-                question_create_button.click(
-                    F.create_translation_question,
-                    [
-                        create_state,
-                        model,
-                        language,
-                        language_proficiency,
-                        difficulty,
-                        additional_information,
-                    ],
-                    [create_state, question_text, answer_box],
-                )
-
                 create_audio_output(tts_provider, language, question_text)
 
         chatbot = gr.Chatbot(
@@ -508,6 +494,19 @@ def create_translation_question(
         )
         chatbot_input = gr.Textbox(
             submit_btn=True, placeholder="Type a message...", show_label=False
+        )
+
+        question_create_button.click(fn=F.clear, outputs=[chatbot]).then(
+            F.create_translation_question,
+            [
+                create_state,
+                model,
+                language,
+                language_proficiency,
+                difficulty,
+                additional_information,
+            ],
+            [create_state, question_text, answer_box],
         )
 
         gr.on(
@@ -600,19 +599,6 @@ def create_reading_comprehension_question(
 
                 create_audio_output(tts_provider, language, topic, text, question)
 
-            question_create_button.click(
-                F.create_reading_comprehension_question,
-                [
-                    create_state,
-                    model,
-                    language,
-                    language_proficiency,
-                    difficulty,
-                    additional_information,
-                ],
-                [create_state, topic, text, question, answer],
-            )
-
         chatbot = gr.Chatbot(
             type="messages",
             show_copy_button=True,
@@ -622,6 +608,19 @@ def create_reading_comprehension_question(
         )
         chatbot_input = gr.Textbox(
             submit_btn=True, placeholder="Type a message...", show_label=False
+        )
+
+        question_create_button.click(fn=F.clear, outputs=[chatbot]).then(
+            F.create_reading_comprehension_question,
+            [
+                create_state,
+                model,
+                language,
+                language_proficiency,
+                difficulty,
+                additional_information,
+            ],
+            [create_state, topic, text, question, answer],
         )
 
         gr.on(

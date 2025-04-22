@@ -534,3 +534,7 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
     # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
     # being yielded
     yield (24000, np.zeros(2400))
+
+
+def clear():
+    return None
