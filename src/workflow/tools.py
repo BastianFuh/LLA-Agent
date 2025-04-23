@@ -1,10 +1,11 @@
+import asyncio
 import json
 import logging
 import os
 import traceback
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
-import grequests
+import aiohttp
 import html2text
 from llama_index.core import Settings, VectorStoreIndex
 from llama_index.core.schema import Document
@@ -14,16 +15,41 @@ from llama_index.tools.google import GoogleSearchToolSpec
 from llama_index.tools.tavily_research import TavilyToolSpec
 
 
-def load_webpages(urls: List[str]):
+async def fetch_webpage(
+    url: str, session: aiohttp.ClientSession, timeout: int = 10
+) -> Dict[str, str]:
+    """Fetch a webpage using aiohttp and return its content as a string.
+
+    Args:
+        url (str): The URL of the webpage to fetch.
+        timeout (int, optional): The timeout for the request in seconds. Defaults to 10.
+
+    Returns:
+        str: The content of the webpage as a string.
+    """
+    try:
+        async with session.get(url, timeout=timeout) as response:
+            return {"text": await response.text(), "url": str(response.url)}
+
+    except asyncio.TimeoutError or aiohttp.ClientError as e:
+        logging.error(f"Error fetching {url}: {e}")
+        return None
+
+
+async def fetch_webpages(
+    urls: List[str],
+    session: aiohttp.ClientSession,
+) -> List[Document]:
+    """Fetch multiple webpages concurrently using aiohttp."""
+
     documents = list()
 
-    request = [grequests.get(url, timeout=10) for url in urls]
-
-    responses = grequests.map(requests=request, size=4)
+    tasks = [asyncio.ensure_future(fetch_webpage(url, session)) for url in urls]
+    responses = await asyncio.gather(*tasks)
 
     documents.extend(
         [
-            Document(text=html2text.html2text(response.text), id_=response.url)
+            Document(text=html2text.html2text(response["text"]), id_=response["url"])
             for response in responses
             if response is not None
         ]
@@ -32,7 +58,11 @@ def load_webpages(urls: List[str]):
     return documents
 
 
-def summarize_website(url: str, query: str) -> str:
+async def summarize_website(
+    url: str,
+    query: str,
+    session: Any = None,  # Technically this is a aiohttp.ClientSession, but this creates problems with pydantic
+) -> str:
     """
     Find information about a query on a specified website. Returns a summary of
     the desired information.
@@ -51,7 +81,11 @@ def summarize_website(url: str, query: str) -> str:
     )
     Settings.llm = OpenAI(model="gpt-4o-mini-2024-07-18")
 
-    documents = load_webpages([url])
+    if session is not None:
+        documents = await fetch_webpages([url], session)
+    else:
+        async with aiohttp.ClientSession() as session:
+            documents = await fetch_webpages([url], session)
 
     if len(documents) == 0:
         logging.debug(f"Error {url} could not be accessed")
@@ -64,10 +98,14 @@ def summarize_website(url: str, query: str) -> str:
     return f"Source: {url} \n Content:{index.as_query_engine().query(input_query).response}"
 
 
-def summarize_websites(urls: list[str], query: str) -> list[str]:
+async def summarize_websites(urls: list[str], query: str) -> list[str]:
     """
     Find information about a query on set of specified websites. Returns a summary per website of
     the desired information.
+
+    This function is more efficient than calling summarize_website for each website separately.
+    It uses the asyncio library to fetch the webpages concurrently. Therefore, it is recommended to
+    use this function instead of summarize_website when multiple websites should be summarized.
 
     Args:
         urls (list[str]): A list of url of websites which information should be summarized
@@ -78,8 +116,12 @@ def summarize_websites(urls: list[str], query: str) -> list[str]:
     """
     logging.info(f"Called summarize_website for {len(urls)} urls with {query}")
     summaries = list()
-    for url in urls:
-        summaries.append(summarize_website(url, query))
+
+    async with aiohttp.ClientSession() as session:
+        request = asyncio.ensure_future(
+            [summarize_website(url, query, session) for url in urls]
+        )
+        summaries.append(await asyncio.gather(*request))
 
     return summaries
 

@@ -1,9 +1,5 @@
-# grequest needs to be up here
-# If not it breaks some request for some reason...
-# Might be fixed by removing it in the file it is used
-from pathlib import Path
-import grequests
 import logging
+from pathlib import Path
 
 import gradio as gr
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
