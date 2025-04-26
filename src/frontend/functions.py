@@ -461,6 +461,8 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
     # Clear current audio
     yield gr.Audio(value=None, streaming=False)
 
+    sr = 24000
+
     if tts_provider == const.TTS_KOKORO:
         yield gr.Audio(value=None, streaming=True)
         pipeline = KPipeline(lang_code="j", repo_id="hexgrad/Kokoro-82M")
@@ -472,7 +474,7 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
         )
 
         for gs, ps, audio in generator:
-            yield (24000, audio.numpy())
+            yield (sr, audio.numpy())
 
     if tts_provider == const.TTS_ELEVENLABS:
         from io import BytesIO
@@ -494,7 +496,7 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
         stream.seek(0)
 
         # return_audio = np.frombuffer(audio, dtype=np.int16)
-        yield (24000, np.frombuffer(stream.getbuffer(), dtype=np.int16))
+        yield (sr, np.frombuffer(stream.getbuffer(), dtype=np.int16))
 
     if tts_provider == const.TTS_OPENAI:
         voices = [
@@ -530,10 +532,41 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
         )
         return_audio = np.frombuffer(response.content, dtype=np.int16)
 
-        yield (24000, return_audio)
+        yield (sr, return_audio)
+
+    if tts_provider == const.TTS_FISH_AUDIO:
+        import io
+        import wave
+
+        from fish_audio_sdk import Session, TTSRequest
+
+        client = Session(apikey="LOCAL", base_url="http://127.0.0.1:8080")
+
+        sr = 21000
+
+        wave_file = io.BytesIO()
+
+        for chunk in client.tts(TTSRequest(text=output_text, format="wav")):
+            wave_file.write(chunk)
+        wave_file.seek(0)
+
+        with wave.open(wave_file, "rb") as wav_file:
+            num_channels = wav_file.getnchannels()
+            framerate = wav_file.getframerate()
+            num_frames = wav_file.getnframes()
+
+            audio_data = wav_file.readframes(num_frames)
+
+            audio_np = np.frombuffer(audio_data, dtype=np.int16)
+
+            # If stereo (2 channels), reshape to [num_frames, 2] array
+            if num_channels == 2:
+                audio_np = audio_np.reshape(-1, 2)
+        sr = framerate
+        yield (framerate, audio_np)
     # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
     # being yielded
-    yield (24000, np.zeros(2400))
+    yield (sr, np.zeros(2400))
 
 
 def clear():

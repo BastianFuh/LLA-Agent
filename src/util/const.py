@@ -37,3 +37,4 @@ OPTION_SEARCH_ENGINE = [("Google", GOOGLE), ("Tavily", TAVILY), ("None", NONE)]
 TTS_OPENAI = "TTS Openai"
 TTS_KOKORO = "TTS Kokoro (local)"
 TTS_ELEVENLABS = "TTS Elevenlabs"
+TTS_FISH_AUDIO = "TTS Fish Audio (local)"

@@ -1,6 +1,7 @@
 import os
 
 import gradio as gr
+from click import clear
 
 import frontend.functions as F
 from util.const import (
@@ -8,6 +9,7 @@ from util.const import (
     OPTION_MODEL,
     OPTION_SEARCH_ENGINE,
     TTS_ELEVENLABS,
+    TTS_FISH_AUDIO,
     TTS_KOKORO,
     TTS_OPENAI,
 )
@@ -66,7 +68,7 @@ def create_gui() -> gr.Blocks:
 
             tts_provider = create_dropdown_input(
                 browser_state,
-                [TTS_KOKORO, TTS_ELEVENLABS, TTS_OPENAI],
+                [TTS_KOKORO, TTS_ELEVENLABS, TTS_OPENAI, TTS_FISH_AUDIO],
                 "tts_provider",
                 "TTS Provider",
             )
@@ -665,6 +667,9 @@ def create_audio_output(tts_provider, language, *text_input_elements):
         generate_button = gr.Button("Generate Audio", scale=1)
 
         generate_button.click(
+            fn=F.clear,
+            outputs=[audio_player],
+        ).then(
             fn=F.create_audio,
             inputs=[tts_provider, language] + list(text_input_elements),
             outputs=[audio_player],
