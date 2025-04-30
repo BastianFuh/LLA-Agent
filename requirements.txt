@@ -19,3 +19,4 @@ openinference-instrumentation-llama-index==4.2.1
 arize-phoenix==8.26.3
 fugashi[unidic]==1.4.0
 fish_audio_sdk==2025.4.2
+openai-whisper==20240930

@@ -118,9 +118,10 @@ async def summarize_websites(urls: list[str], query: str) -> list[str]:
     summaries = list()
 
     async with aiohttp.ClientSession() as session:
-        request = asyncio.ensure_future(
-            [summarize_website(url, query, session) for url in urls]
-        )
+        request = [
+            asyncio.ensure_future(summarize_website(url, query, session))
+            for url in urls
+        ]
         summaries.append(await asyncio.gather(*request))
 
     return summaries
@@ -157,13 +158,17 @@ def google_websearch(query: str, max_results: Optional[int] = 6) -> List[dict]:
 
         result = list()
         for document in search_results:
-            for search_result in json.loads(document.text)["items"]:
-                result.append(
-                    {
-                        "url": search_result["link"],
-                        "content": f"Title: {search_result['title']} Content \n {search_result['snippet']}",
-                    }
-                )
+            json_data = json.loads(document.text)
+
+            if json_data.__contains__("items"):
+                for search_result in json_data["items"]:
+                    if search_result.__contains__("snippet"):
+                        result.append(
+                            {
+                                "url": search_result["link"],
+                                "content": f"Title: {search_result['title']} Content \n {search_result['snippet']}",
+                            }
+                        )
     except Exception as e:
         print(e)
         print(traceback.format_exc())

@@ -1,7 +1,6 @@
 import os
 
 import gradio as gr
-from click import clear
 
 import frontend.functions as F
 from util.const import (
@@ -13,6 +12,49 @@ from util.const import (
     TTS_KOKORO,
     TTS_OPENAI,
 )
+from util.transcription import AudioTranscriber
+
+
+def handle_audio_output_while_not_recording(state: dict) -> str | dict:
+    """Handle audio output while not recording."""
+
+    if state["initialized"]:
+        return gr.skip()
+    else:
+        state["initialized"] = True
+        return ""
+
+
+transcriber = AudioTranscriber(handle_audio_output_while_not_recording)
+
+
+def create_textbox_with_audio_input(**text_box_kargs) -> gr.Textbox:
+    audio_input_state = gr.State({"initialized": False})
+    with gr.Column(variant="compact"):
+        text_box = gr.Textbox(
+            interactive=True,
+            value=transcriber.get_text,
+            inputs=[audio_input_state],
+            every=0.1,
+            **text_box_kargs,
+        )
+
+        audio_input = gr.Audio(
+            label="Audio Transcription for Textbox",
+            sources="microphone",
+            type="numpy",
+            streaming=True,
+        )
+
+        audio_input.start_recording(transcriber.start_recording, trigger_mode="once")
+        audio_input.stop_recording(transcriber.stop_recording, trigger_mode="once")
+
+        audio_input.stream(
+            fn=transcriber.feed_audio,
+            inputs=[audio_input],
+        )
+
+    return text_box
 
 
 def create_gui() -> gr.Blocks:
@@ -472,18 +514,16 @@ def create_translation_question(
                     show_copy_button=True,
                 )
 
-                with gr.Column():
-                    answer_box = gr.Textbox(
-                        label="Answer",
-                        submit_btn=True,
-                        placeholder="Type your answer...",
-                    )
-                    # question_submit_button = answer_box.submit_btn
+                answer_box = create_textbox_with_audio_input(
+                    label="Answer",
+                    submit_btn=True,
+                    placeholder="Type your answer...",
+                )
+                # question_submit_button = answer_box.submit_btn
 
-                with gr.Row():
-                    question_create_button = gr.Button(
-                        "Next", elem_classes="next-button", scale=1
-                    )
+                question_create_button = gr.Button(
+                    "Next", elem_classes="next-button", scale=1
+                )
 
                 create_audio_output(tts_provider, language, question_text)
 
@@ -561,6 +601,7 @@ def create_reading_comprehension_question(
         scale=1,
     ):
         with gr.Row():
+            # Topic and Text
             with gr.Column(variant="panel"):
                 topic = gr.Textbox(
                     "",
@@ -581,6 +622,8 @@ def create_reading_comprehension_question(
                 )
 
                 question_create_button = gr.Button("Next", elem_classes="next-button")
+
+            # Question and Answer
             with gr.Column():
                 question = gr.Textbox(
                     label="Question",
@@ -588,7 +631,7 @@ def create_reading_comprehension_question(
                     interactive=False,
                     show_copy_button=True,
                 )
-                answer = gr.TextArea(
+                answer = create_textbox_with_audio_input(
                     label="Answer",
                     placeholder="Type your answer...",
                     lines=3,

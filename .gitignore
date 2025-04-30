@@ -1,9 +1,11 @@
 __pycache__/
 mlruns/
 
-test.py
+*test.py
 *.prof
-
+*.lock
+*.log
 *.wav
+*.pem
 
 settings.json

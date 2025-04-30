@@ -5,9 +5,13 @@ import gradio as gr
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
-from frontend.gui import create_gui
+logging.getLogger("faster_whisper").setLevel(logging.WARNING)
+root_logger = logging.getLogger(__name__)
+
 
 if __name__ == "__main__":
+    from frontend.gui import create_gui
+
     css_path = (
         Path(__file__).parents[0] / Path("..") / Path("resource") / Path("style.css")
     )
@@ -19,6 +23,7 @@ if __name__ == "__main__":
     LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
 
     logging.basicConfig(level=logging.INFO)
+
     with gr.Blocks(
         theme=gr.themes.Default(text_size=gr.themes.sizes.text_lg),
         fill_height=True,
