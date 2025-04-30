@@ -1,6 +1,7 @@
 import os
 
 import gradio as gr
+from matplotlib.pyplot import sca
 
 import frontend.functions as F
 from util.const import (
@@ -26,35 +27,6 @@ def handle_audio_output_while_not_recording(state: dict) -> str | dict:
 
 
 transcriber = AudioTranscriber(handle_audio_output_while_not_recording)
-
-
-def create_textbox_with_audio_input(**text_box_kargs) -> gr.Textbox:
-    audio_input_state = gr.State({"initialized": False})
-    with gr.Column(variant="compact"):
-        text_box = gr.Textbox(
-            interactive=True,
-            value=transcriber.get_text,
-            inputs=[audio_input_state],
-            every=0.1,
-            **text_box_kargs,
-        )
-
-        audio_input = gr.Audio(
-            label="Audio Transcription for Textbox",
-            sources="microphone",
-            type="numpy",
-            streaming=True,
-        )
-
-        audio_input.start_recording(transcriber.start_recording, trigger_mode="once")
-        audio_input.stop_recording(transcriber.stop_recording, trigger_mode="once")
-
-        audio_input.stream(
-            fn=transcriber.feed_audio,
-            inputs=[audio_input],
-        )
-
-    return text_box
 
 
 def create_gui() -> gr.Blocks:
@@ -209,8 +181,8 @@ def create_chatbot_tab(
     search_engine,
 ):
     chatbot = gr.Chatbot(
-        scale=2,
         type="messages",
+        scale=1,
         placeholder="<strong>Your Personal Language Learning Assistant</strong><br>Ask Me Anything",
     )
     gr.ChatInterface(
@@ -380,10 +352,7 @@ def create_multiple_choice_questions(
                     question_options,
                 )
 
-        chatbot = gr.Chatbot(
-            type="messages",
-            placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
-        )
+        chatbot = create_chatbot()
         gr.ChatInterface(
             fn=F.basic_chat,
             type="messages",
@@ -466,10 +435,7 @@ def create_free_text_questions(
                     F.show_free_text_answer, [create_state], [answer_box]
                 )
 
-        chatbot = gr.Chatbot(
-            type="messages",
-            placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
-        )
+        chatbot = create_chatbot()
         gr.ChatInterface(
             fn=F.basic_chat,
             type="messages",
@@ -527,13 +493,10 @@ def create_translation_question(
 
                 create_audio_output(tts_provider, language, question_text)
 
-        chatbot = gr.Chatbot(
-            type="messages",
-            show_copy_button=True,
-            resizable=True,
-            min_height=700,
-            placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
+        chatbot = create_chatbot(
+            "<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything"
         )
+
         chatbot_input = gr.Textbox(
             submit_btn=True, placeholder="Type a message...", show_label=False
         )
@@ -638,18 +601,10 @@ def create_reading_comprehension_question(
                     submit_btn=True,
                 )
 
-                # question_submit_button = gr.Button(
-                #    "Submit", elem_classes="submit-custom-button"
-                # )
-
                 create_audio_output(tts_provider, language, topic, text, question)
 
-        chatbot = gr.Chatbot(
-            type="messages",
-            show_copy_button=True,
-            resizable=True,
-            min_height=500,
-            placeholder="<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything",
+        chatbot = create_chatbot(
+            "<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything"
         )
         chatbot_input = gr.Textbox(
             submit_btn=True, placeholder="Type a message...", show_label=False
@@ -717,3 +672,43 @@ def create_audio_output(tts_provider, language, *text_input_elements):
             inputs=[tts_provider, language] + list(text_input_elements),
             outputs=[audio_player],
         )
+
+
+def create_textbox_with_audio_input(**text_box_kargs) -> gr.Textbox:
+    audio_input_state = gr.State({"initialized": False})
+    with gr.Column(variant="compact"):
+        text_box = gr.Textbox(
+            interactive=True,
+            value=transcriber.get_text,
+            inputs=[audio_input_state],
+            every=0.1,
+            **text_box_kargs,
+        )
+
+        audio_input = gr.Audio(
+            label="Audio Transcription for Textbox",
+            sources="microphone",
+            type="numpy",
+            streaming=True,
+        )
+
+        audio_input.start_recording(transcriber.start_recording, trigger_mode="once")
+        audio_input.stop_recording(transcriber.stop_recording, trigger_mode="once")
+
+        audio_input.stream(
+            fn=transcriber.feed_audio,
+            inputs=[audio_input],
+        )
+
+    return text_box
+
+
+def create_chatbot(
+    placeholder: str = "<strong>Your Personal Language Learning Assistant</strong><br>Ask Me Anything",
+) -> gr.Chatbot:
+    return gr.Chatbot(
+        type="messages",
+        show_copy_button=True,
+        scale=1,
+        placeholder=placeholder,
+    )
