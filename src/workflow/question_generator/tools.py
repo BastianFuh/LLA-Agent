@@ -164,7 +164,7 @@ async def create_multiple_choice_question_incorrect_options(
 
     answer = await context.get(QUESTION_ANSWER)
 
-    additional_options.insert(random.randint(0, len(additional_options) - 1), answer)
+    additional_options.insert(random.randint(0, len(additional_options)), answer)
 
     answer_index = additional_options.index(answer)
 
