@@ -24,10 +24,14 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
+    # theme: gr.themes.Base = gr.themes.ThemeClass().from_hub("allenai/gradio-theme")
+    theme = gr.themes.Default(text_size=gr.themes.sizes.text_lg)
+
     with gr.Blocks(
-        theme=gr.themes.Default(text_size=gr.themes.sizes.text_lg),
+        theme=theme,
         fill_height=True,
         css=custom_css,
+        title="LLA-Agent",
     ) as demo:
         create_gui()
 

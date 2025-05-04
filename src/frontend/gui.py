@@ -2,6 +2,7 @@ import os
 
 import gradio as gr
 from matplotlib.pyplot import sca
+from rdflib import Container
 
 import frontend.functions as F
 from util.const import (
@@ -49,15 +50,18 @@ def create_gui() -> gr.Blocks:
 
     create_state = gr.State({})
 
-    with gr.Sidebar(position="right"):
-        language = create_text_input(browser_state, False, "language", "Language")
-        language_proficiency = create_text_input(
-            browser_state, False, "language_proficiency", "Language Proficiency"
-        )
-        difficulty = create_text_input(browser_state, False, "difficulty", "Difficulty")
-        additional_information = create_text_input(
-            browser_state, True, "additional_information", "Additional Information"
-        )
+    with gr.Sidebar(label="Settings", position="right"):
+        with gr.Group():
+            language = create_text_input(browser_state, False, "language", "Language")
+            language_proficiency = create_text_input(
+                browser_state, False, "language_proficiency", "Language Proficiency"
+            )
+            difficulty = create_text_input(
+                browser_state, False, "difficulty", "Difficulty"
+            )
+            additional_information = create_text_input(
+                browser_state, True, "additional_information", "Additional Information"
+            )
 
     with gr.Tabs(selected=1):
         with gr.Tab("Options", id=0, scale=1):
@@ -296,34 +300,35 @@ def create_multiple_choice_questions(
         state = gr.State({"selected_option": None})
 
         with gr.Row():
-            with gr.Column(variant="panel"):
+            with gr.Group():
                 question_text = gr.TextArea(
                     "",
                     label="Question",
-                    container=False,
                     lines=1,
                     interactive=False,
                     placeholder="Your question will be generated here",
                 )
 
-                with gr.Column():
-                    question_options = [
-                        gr.Checkbox(label="Answer 1"),
-                        gr.Checkbox(label="Answer 2"),
-                        gr.Checkbox(label="Answer 3"),
-                        gr.Checkbox(label="Answer 4"),
-                    ]
+                # Multiple checkboxes are used here instead of radio, or groupcheckbox because they should be in a
+                # vertival row and this does not seem to be possible with the alternative options.
 
-                    for checkbox in question_options:
-                        checkbox.select(
-                            F.process_select,
-                            [state] + question_options,
-                            [state] + question_options,
-                        )
+                question_options = [
+                    gr.Checkbox(label="Answer 1"),
+                    gr.Checkbox(label="Answer 2"),
+                    gr.Checkbox(label="Answer 3"),
+                    gr.Checkbox(label="Answer 4"),
+                ]
 
-                        checkbox.change(
-                            F.process_unselect, [state] + question_options, [state]
-                        )
+                for checkbox in question_options:
+                    checkbox.select(
+                        F.process_select,
+                        [state] + question_options,
+                        [state] + question_options,
+                    )
+
+                    checkbox.change(
+                        F.process_unselect, [state] + question_options, [state]
+                    )
 
                 with gr.Row():
                     question_create_button = gr.Button(
@@ -333,24 +338,24 @@ def create_multiple_choice_questions(
                         "Submit", elem_classes="submit-custom-button", scale=2
                     )
 
-                question_create_button.click(
-                    F.create_multiple_choice_questions,
-                    [
-                        create_state,
-                        model,
-                        language,
-                        language_proficiency,
-                        difficulty,
-                        additional_information,
-                    ],
-                    [create_state, question_text] + question_options,
-                )
+            question_create_button.click(
+                F.create_multiple_choice_questions,
+                [
+                    create_state,
+                    model,
+                    language,
+                    language_proficiency,
+                    difficulty,
+                    additional_information,
+                ],
+                [create_state, question_text] + question_options,
+            )
 
-                question_submit_button.click(
-                    F.verify_multiple_choice_question,
-                    [create_state] + question_options,
-                    question_options,
-                )
+            question_submit_button.click(
+                F.verify_multiple_choice_question,
+                [create_state] + question_options,
+                question_options,
+            )
 
         chatbot = create_chatbot()
         gr.ChatInterface(
@@ -384,56 +389,51 @@ def create_free_text_questions(
     with gr.Column(
         scale=1,
     ):
-        with gr.Row():
-            with gr.Column(scale=2, variant="panel"):
-                question_text = gr.TextArea(
-                    "",
-                    label="Question",
-                    placeholder="Your question will be generated here",
-                    container=False,
-                    lines=1,
-                    interactive=False,
+        with gr.Group():
+            question_text = gr.TextArea(
+                label="Question",
+                placeholder="Your question will be generated here",
+                lines=1,
+                interactive=False,
+            )
+
+            answer_box = gr.Textbox(
+                show_label=False,
+                placeholder="Type your answer...",
+                submit_btn=True,
+            )
+
+            with gr.Row():
+                question_create_button = gr.Button(
+                    "Next", elem_classes="next-button", scale=1
+                )
+                question_show_answer = gr.Button(
+                    "Show Answer", elem_classes="show-answer-button", scale=1
                 )
 
-                with gr.Row():
-                    answer_box = gr.Textbox(
-                        label="Answer",
-                        placeholder="Type your answer...",
-                        scale=4,
-                        submit_btn=True,
-                    )
+            question_create_button.click(
+                F.create_free_text_question,
+                [
+                    create_state,
+                    model,
+                    language,
+                    language_proficiency,
+                    difficulty,
+                    additional_information,
+                ],
+                [create_state, question_text, answer_box],
+            )
 
-                with gr.Row():
-                    question_create_button = gr.Button(
-                        "Next", elem_classes="next-button", scale=1
-                    )
-                    question_show_answer = gr.Button(
-                        "Show Answer", elem_classes="show-answer-button", scale=1
-                    )
+            gr.on(
+                triggers=[answer_box.submit],
+                fn=F.verify_free_text_question,
+                inputs=[create_state, answer_box],
+                outputs=[answer_box],
+            )
 
-                question_create_button.click(
-                    F.create_free_text_question,
-                    [
-                        create_state,
-                        model,
-                        language,
-                        language_proficiency,
-                        difficulty,
-                        additional_information,
-                    ],
-                    [create_state, question_text, answer_box],
-                )
-
-                gr.on(
-                    triggers=[answer_box.submit],
-                    fn=F.verify_free_text_question,
-                    inputs=[create_state, answer_box],
-                    outputs=[answer_box],
-                )
-
-                question_show_answer.click(
-                    F.show_free_text_answer, [create_state], [answer_box]
-                )
+            question_show_answer.click(
+                F.show_free_text_answer, [create_state], [answer_box]
+            )
 
         chatbot = create_chatbot()
         gr.ChatInterface(
@@ -468,30 +468,28 @@ def create_translation_question(
     with gr.Column(
         scale=1,
     ):
-        with gr.Row():
-            with gr.Column(variant="panel"):
-                question_text = gr.TextArea(
-                    "",
-                    label="Question",
-                    placeholder="Your question will be generated here",
-                    container=False,
-                    lines=1,
-                    interactive=False,
-                    show_copy_button=True,
-                )
+        with gr.Group():
+            question_text = gr.TextArea(
+                "",
+                label="Question",
+                placeholder="Your question will be generated here",
+                lines=1,
+                interactive=False,
+                show_copy_button=True,
+            )
 
-                answer_box = create_textbox_with_audio_input(
-                    label="Answer",
-                    submit_btn=True,
-                    placeholder="Type your answer...",
-                )
-                # question_submit_button = answer_box.submit_btn
+            answer_box = create_textbox_with_audio_input(
+                show_label=False,
+                submit_btn=True,
+                placeholder="Type your answer...",
+            )
+            # question_submit_button = answer_box.submit_btn
 
-                question_create_button = gr.Button(
-                    "Next", elem_classes="next-button", scale=1
-                )
+            question_create_button = gr.Button(
+                "Next", elem_classes="next-button", scale=1
+            )
 
-                create_audio_output(tts_provider, language, question_text)
+        create_audio_output(tts_provider, language, question_text)
 
         chatbot = create_chatbot(
             "<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything"
@@ -565,20 +563,21 @@ def create_reading_comprehension_question(
     ):
         with gr.Row():
             # Topic and Text
-            with gr.Column(variant="panel"):
+            with gr.Group():
                 topic = gr.Textbox(
                     "",
                     label="Topic",
-                    placeholder="The topic of the text",
                     container=False,
+                    placeholder="The topic of the text",
                     lines=1,
                     interactive=False,
+                    show_label=False,
                 )
 
                 text = gr.TextArea(
-                    label="Text",
-                    placeholder="The text of the reading comprehension",
+                    show_label=False,
                     container=False,
+                    placeholder="The text of the reading comprehension",
                     interactive=False,
                     lines=11,
                     autoscroll=True,
@@ -588,18 +587,19 @@ def create_reading_comprehension_question(
 
             # Question and Answer
             with gr.Column():
-                question = gr.Textbox(
-                    label="Question",
-                    placeholder="Your question will be generated here",
-                    interactive=False,
-                    show_copy_button=True,
-                )
-                answer = create_textbox_with_audio_input(
-                    label="Answer",
-                    placeholder="Type your answer...",
-                    lines=3,
-                    submit_btn=True,
-                )
+                with gr.Group():
+                    question = gr.Textbox(
+                        label="Question",
+                        placeholder="Your question will be generated here",
+                        interactive=False,
+                        show_copy_button=True,
+                    )
+                    answer = create_textbox_with_audio_input(
+                        label="Answer",
+                        placeholder="Type your answer...",
+                        lines=3,
+                        submit_btn=True,
+                    )
 
                 create_audio_output(tts_provider, language, topic, text, question)
 
@@ -658,30 +658,31 @@ def create_reading_comprehension_question(
 
 
 def create_audio_output(tts_provider, language, *text_input_elements):
-    with gr.Column():
+    with gr.Group():
         audio_player = gr.Audio(
             interactive=False, scale=4, type="numpy", streaming=True
         )
         generate_button = gr.Button("Generate Audio", scale=1)
 
-        generate_button.click(
-            fn=F.clear,
-            outputs=[audio_player],
-        ).then(
-            fn=F.create_audio,
-            inputs=[tts_provider, language] + list(text_input_elements),
-            outputs=[audio_player],
-        )
+    generate_button.click(
+        fn=F.clear,
+        outputs=[audio_player],
+    ).then(
+        fn=F.create_audio,
+        inputs=[tts_provider, language] + list(text_input_elements),
+        outputs=[audio_player],
+    )
 
 
 def create_textbox_with_audio_input(**text_box_kargs) -> gr.Textbox:
     audio_input_state = gr.State({"initialized": False})
-    with gr.Column(variant="compact"):
+    with gr.Group():
         text_box = gr.Textbox(
             interactive=True,
             value=transcriber.get_text,
             inputs=[audio_input_state],
             every=0.1,
+            scale=2,
             **text_box_kargs,
         )
 
@@ -690,6 +691,8 @@ def create_textbox_with_audio_input(**text_box_kargs) -> gr.Textbox:
             sources="microphone",
             type="numpy",
             streaming=True,
+            scale=1,
+            waveform_options=gr.WaveformOptions(show_recording_waveform=False),
         )
 
         audio_input.start_recording(transcriber.start_recording, trigger_mode="once")
