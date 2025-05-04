@@ -1,5 +1,6 @@
 import logging
 import random
+from textwrap import TextWrapper, wrap
 
 import gradio as gr
 import numpy as np
@@ -14,6 +15,8 @@ from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
 from workflow.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
 from workflow.question_generator import tools as QGT
 from workflow.question_generator.base import QuestionBuffer, QuestionGenerator
+
+text_wrapper = TextWrapper(width=37, expand_tabs=False, replace_whitespace=False)
 
 
 def _get_question_generator(state: dict, model: str):
@@ -441,10 +444,12 @@ async def create_reading_comprehension_question(
         text = f"{question_data[QGT.READING_COMPREHENSION_TEXT]}"
         question = f"{question_data[QGT.READING_COMPREHENSION_QUESTION]}"
 
+        wrapped_text = text_wrapper.fill(text)
+
         yield (
             state,
             gr.Textbox(value=topic),
-            gr.TextArea(value=text),
+            gr.TextArea(value=wrapped_text),
             gr.Textbox(value=question),
             gr.Textbox(value="", info=""),
         )
@@ -456,10 +461,15 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
     output_text = args[0]
     for arg in args[1:]:
         # The added dots should results in breaks during speaking
-        output_text += ". " + arg
+        if tts_provider == const.TTS_KOKORO:
+            output_text += ". " + arg
+        else:
+            output_text += arg
 
     # Clear current audio
     yield gr.Audio(value=None, streaming=False)
+
+    output_text = output_text.replace("\n", "")
 
     sr = 24000
 
