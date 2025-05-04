@@ -58,8 +58,14 @@ You might also make the question about tense structure, subject-verb agreement, 
 
 NEVER replace just a noun.
 
+ALWAYS pay attention to the fact that no parts of the answer should be included in the question text. 
+
 ## Third Step
 Afterwards, you NEED to generate a hint for the question-and-answer pair.
+NEVER include information that would immediately point out the correct answer, such as the grammar structure in the target language.
+Keep the hint short and concise. It does not even need to be a sentence.
+
+
 
 ## Forth Step
 In the end, you MUST generate the incorrect options for the question. 
