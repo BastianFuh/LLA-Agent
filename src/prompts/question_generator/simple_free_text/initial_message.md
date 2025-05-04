@@ -13,33 +13,34 @@ These sentences MUST be fully formed and not include a placeholder of "___".
 
 You MUST generate at least 10. 
 Every text MUST use different grammatical structures. 
+Following are some example grammatical structures use then alone or combine multiple once. 
 
-Use different core sentece structures such as 
+You might use different core sentence structures, such as 
 - simple sentences with one independent clause 
 - compound sentences with two independent clauses joined by a coordinator
-- complex sentences with one independent plus one or more dependent clauses or compound-compex sentece which mix conpound and complex. 
+- complex sentences with one independent plus one or more dependent clauses or a compound-complex sentence which mixes compound and complex. 
 
-Use different tense structures such as:
+You might use different tense structures, such as:
 - Present Simple / Past Simple / Future Simple
 - Present Continuous / Past Continuous / Future Continuous
 - Present Perfect / Past Perfect / Future Perfect
 - Perfect Continuous Tenses
 
-Use a mix of nouns, pronouns, verbs, adjectives, adverbs, prepositions, conjunctions, articles or particles.
+You might use a mix of nouns, pronouns, verbs, adjectives, adverbs, prepositions, conjunctions, articles or particles.
 
-Use different conditionals like:
+You might use different conditionals like:
 - Zero Conditional (facts): If you heat water, it boils.
 - First Conditional (real future): If it rains, I will stay in.
 - Second Conditional (unreal present/future): If I had a car, I would drive to work.
 - Third Conditional (unreal past): If I had studied, I would have passed.
 
-Use modal verbs such as can, could, must, might, should, would, will, shall.
+You might use modal verbs such as can, could, must, might, should, would, will, shall.
 
-Use passive voice.
+You might use passive voice.
 
-Use relative clauses.
+You might use relative clauses.
 
-Use question and negatives.
+You might use question and negatives.
 
 Alter the length of the options. 
 Also NEVER include "___" in any of the options. 
