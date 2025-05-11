@@ -1,7 +1,8 @@
 from llama_index.core.tools import FunctionTool
 from llama_index.core.workflow import Context
-from llama_index.llms.openai import OpenAI
 from llama_index.llms.deepseek import DeepSeek
+from llama_index.llms.ollama import Ollama
+from llama_index.llms.openai import OpenAI
 from llama_index.llms.openrouter import OpenRouter
 
 from util import const
@@ -53,6 +54,15 @@ def get_llm(model: str, temperature=1.2, max_tokens=1024):
         case const.PROVIDER_OPENROUTER:
             return OpenRouter(
                 model=model_name, temperature=temperature, max_tokens=max_tokens
+            )
+        case const.PROVIDER_OLLAMA:
+            # Ollama does not like temperatures above 1
+            temperature = 1 if temperature > 1 else temperature
+            return Ollama(
+                model=model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                is_chat_model=True,
             )
         case _:
             raise ValueError("Unknown Provider")

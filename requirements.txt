@@ -4,6 +4,7 @@ llama_index==0.12.32
 llama_index_llms_openai==0.3.38
 llama_index_llms_deepseek==0.1.1
 llama_index_llms_openrouter==0.3.1
+llama_index_llms_ollama==0.5.4
 llama_index_embeddings_huggingface==0.5.3
 llama_index_tools_google==0.3.0
 llama_index_tools_tavily_research==0.3.0

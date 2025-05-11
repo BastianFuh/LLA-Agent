@@ -1,3 +1,6 @@
+import ollama
+import requests
+
 IS_STREAM: str = "is_stream"
 AUDIO_OUTPUT: str = "audio_output"
 MODEL: str = "model"
@@ -10,6 +13,7 @@ OptionType = dict[str, tuple[str, str]]
 PROVIDER_OPENROUTER = "openrouter"
 PROVIDER_DEEPSEEK = "deekseek"
 PROVIDER_OPENAI = "openai"
+PROVIDER_OLLAMA = "ollama"
 
 OPTION_MODEL: OptionType = {
     "OpenAI: GPT-4o-mini": ("gpt-4o-mini-2024-07-18", PROVIDER_OPENAI),
@@ -19,6 +23,23 @@ OPTION_MODEL: OptionType = {
     "Deepseek: DeepSeek-V3": ("deepseek-chat", PROVIDER_DEEPSEEK),
     "Deepseek: DeepSeek-R1": ("deepseek-reasoner", PROVIDER_DEEPSEEK),
 }
+
+
+def ollama_is_function_calling(model: str) -> bool:
+    response = requests.post("http://localhost:11434/api/show", json={"model": model})
+
+    if response.status_code == 200:
+        return "tools" in response.json()["capabilities"]
+
+    return False
+
+
+for ollama_model in ollama.list().models:
+    model = ollama_model["model"]
+    if ollama_is_function_calling(model):
+        name = f"Ollama: {model}"
+        OPTION_MODEL[name] = (model, PROVIDER_OLLAMA)
+
 
 OPTION_EMBEDDING: OptionType = [
     (
