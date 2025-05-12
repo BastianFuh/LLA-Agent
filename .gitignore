@@ -1,6 +1,9 @@
 __pycache__/
 mlruns/
 
+voice_references/*.mp3
+voice_references/*.json
+
 *test.py
 *.prof
 *.lock
