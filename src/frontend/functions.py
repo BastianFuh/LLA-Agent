@@ -11,6 +11,7 @@ from openai import AsyncOpenAI
 
 import prompts
 from util import const
+from util.audio import get_voice_samples
 from workflow.chatbot.chatbot_workflow import ChatBotWorkfLow
 from workflow.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
 from workflow.question_generator import tools as QGT
@@ -548,7 +549,7 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
         import io
         import wave
 
-        from fish_audio_sdk import Session, TTSRequest
+        from fish_audio_sdk import ReferenceAudio, Session, TTSRequest
 
         client = Session(apikey="LOCAL", base_url="http://127.0.0.1:8080")
 
@@ -556,7 +557,32 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
 
         wave_file = io.BytesIO()
 
-        for chunk in client.tts(TTSRequest(text=output_text, format="wav")):
+        voices = get_voice_samples(language)
+
+        if len(voices) != 0:
+            # Select a random voice from the list
+            voice = voices[random.randint(0, len(voices) - 1)]
+
+            # Prepare the voice reference
+
+            audio_path = voice["audio_file"]
+
+            # Read wav file to bytes
+            with open(audio_path, "rb") as f:
+                voice_audio = f.read()
+
+            references = [
+                ReferenceAudio(
+                    audio=voice_audio,
+                    text=voice["text"],
+                )
+            ]
+        else:
+            references = []
+
+        for chunk in client.tts(
+            TTSRequest(text=output_text, format="wav", references=references)
+        ):
             wave_file.write(chunk)
         wave_file.seek(0)
 
