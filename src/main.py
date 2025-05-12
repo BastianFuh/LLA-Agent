@@ -5,11 +5,19 @@ import gradio as gr
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
+from util.audio import init_fish_audio_voice_samples
+from util.model import init_models
+
 logging.getLogger("faster_whisper").setLevel(logging.WARNING)
 root_logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    init_fish_audio_voice_samples()
+    init_models()
+
     from frontend.gui import create_gui
 
     css_path = (
@@ -21,8 +29,6 @@ if __name__ == "__main__":
 
     tracer_provider = register(project_name="LLA-Agent", batch=True, verbose=False)
     LlamaIndexInstrumentor().instrument(tracer_provider=tracer_provider)
-
-    logging.basicConfig(level=logging.INFO)
 
     # theme: gr.themes.Base = gr.themes.ThemeClass().from_hub("allenai/gradio-theme")
     theme = gr.themes.Default(text_size=gr.themes.sizes.text_lg)
