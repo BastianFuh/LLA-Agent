@@ -1,8 +1,6 @@
 import os
 
 import gradio as gr
-from matplotlib.pyplot import sca
-from rdflib import Container
 
 import frontend.functions as F
 from util.const import (
