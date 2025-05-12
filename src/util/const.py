@@ -1,6 +1,3 @@
-import ollama
-import requests
-
 IS_STREAM: str = "is_stream"
 AUDIO_OUTPUT: str = "audio_output"
 MODEL: str = "model"
@@ -9,11 +6,13 @@ EMBEDDING_MODEL: str = "embedding"
 SEARCH_ENGINE: str = "serach_engine"
 
 OptionType = dict[str, tuple[str, str]]
+OptionTypeEmbedding = list[tuple[str, str]]
 
 PROVIDER_OPENROUTER = "openrouter"
 PROVIDER_DEEPSEEK = "deekseek"
 PROVIDER_OPENAI = "openai"
 PROVIDER_OLLAMA = "ollama"
+PROVIDER_HUGGINGFACE = "huggingface"
 
 OPTION_MODEL: OptionType = {
     "OpenAI: GPT-4o-mini": ("gpt-4o-mini-2024-07-18", PROVIDER_OPENAI),
@@ -25,29 +24,14 @@ OPTION_MODEL: OptionType = {
 }
 
 
-def ollama_is_function_calling(model: str) -> bool:
-    response = requests.post("http://localhost:11434/api/show", json={"model": model})
-
-    if response.status_code == 200:
-        return "tools" in response.json()["capabilities"]
-
-    return False
-
-
-for ollama_model in ollama.list().models:
-    model = ollama_model["model"]
-    if ollama_is_function_calling(model):
-        name = f"Ollama: {model}"
-        OPTION_MODEL[name] = (model, PROVIDER_OLLAMA)
-
-
-OPTION_EMBEDDING: OptionType = [
-    (
-        "MiniLM L12 v2 (fast)",
+OPTION_EMBEDDING: OptionType = {
+    "MiniLM L12 v2 (fast)": (
         "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        PROVIDER_HUGGINGFACE,
     ),
-    ("BGE M3 (kind of slow)", "BAAI/bge-m3"),
-]
+    "BGE M3 (kind of slow)": ("BAAI/bge-m3", PROVIDER_HUGGINGFACE),
+}
+
 
 NONE = "none"
 GOOGLE = "google"

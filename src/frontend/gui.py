@@ -6,14 +6,13 @@ from rdflib import Container
 
 import frontend.functions as F
 from util.const import (
-    OPTION_EMBEDDING,
-    OPTION_MODEL,
     OPTION_SEARCH_ENGINE,
     TTS_ELEVENLABS,
     TTS_FISH_AUDIO,
     TTS_KOKORO,
     TTS_OPENAI,
 )
+from util.model import get_embedding_models, get_llm_models
 from util.transcription import AudioTranscriber
 
 
@@ -36,8 +35,8 @@ def create_gui() -> gr.Blocks:
         "language_proficiency": "",
         "difficulty": "",
         "additional_information": "",
-        "option_model": list(OPTION_MODEL.keys())[0],
-        "option_embedding_model": OPTION_EMBEDDING[0][1],
+        "option_model": list(get_llm_models().keys())[0],
+        "option_embedding_model": list(get_embedding_models().keys())[0],
         "option_search_engine": OPTION_SEARCH_ENGINE[0][1],
         "option_is_stream": False,
         "option_audio_output": False,
@@ -65,14 +64,14 @@ def create_gui() -> gr.Blocks:
 
     with gr.Tabs(selected=1):
         with gr.Tab("Options", id=0, scale=1):
-            options = list(OPTION_MODEL.keys())
+            options = list(get_llm_models().keys())
             model = create_dropdown_input(
                 browser_state, options, "option_model", "Chatbot Model"
             )
 
             embedding_model = create_dropdown_input(
                 browser_state,
-                OPTION_EMBEDDING,
+                list(get_embedding_models().keys()),
                 "option_embedding_model",
                 "Embedding Model",
             )

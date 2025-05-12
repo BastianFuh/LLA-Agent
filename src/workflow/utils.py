@@ -6,6 +6,7 @@ from llama_index.llms.openai import OpenAI
 from llama_index.llms.openrouter import OpenRouter
 
 from util import const
+from util.model import get_llm_models
 from workflow import tools
 
 
@@ -34,7 +35,7 @@ async def get_llms_tools(ctx: Context) -> list:
 
 
 def get_llm(model: str, temperature=1.2, max_tokens=1024):
-    model_information = const.OPTION_MODEL[model]
+    model_information = get_llm_models()[model]
 
     model_name = model_information[0]
 

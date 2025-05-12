@@ -11,6 +11,7 @@ from openai import AsyncOpenAI
 
 import prompts
 from util import const
+from util.model import get_llm_models
 from workflow import utils as w_utils
 from workflow.events import (
     AudioFinishedEvent,
@@ -89,7 +90,7 @@ class ChatBotWorkfLow(Workflow):
 
         model = await ctx.get(const.MODEL)
 
-        model_information = const.OPTION_MODEL[model]
+        model_information = get_llm_models()[model]
 
         model_name = model_information[0]
         provider = model_information[1]

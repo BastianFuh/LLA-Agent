@@ -6,6 +6,7 @@ llama_index_llms_deepseek==0.1.1
 llama_index_llms_openrouter==0.3.1
 llama_index_llms_ollama==0.5.4
 llama_index_embeddings_huggingface==0.5.3
+llama-index-embeddings-ollama==0.6.0
 llama_index_tools_google==0.3.0
 llama_index_tools_tavily_research==0.3.0
 gradio==5.25.2

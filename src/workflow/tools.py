@@ -79,6 +79,7 @@ async def summarize_website(
     Settings.embed_model = HuggingFaceEmbedding(
         model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     )
+
     Settings.llm = OpenAI(model="gpt-4o-mini-2024-07-18")
 
     if session is not None:
