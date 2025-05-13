@@ -5,9 +5,9 @@ from llama_index.llms.ollama import Ollama
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.openrouter import OpenRouter
 
+from backend import tools
 from util import const
 from util.model import get_llm_models
-from workflow import tools
 
 
 async def get_llms_tools(ctx: Context) -> list:

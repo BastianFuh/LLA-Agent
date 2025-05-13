@@ -2,7 +2,7 @@ import random
 
 from llama_index.core.workflow import Context
 
-import workflow.question_generator as question_generator
+import backend.question_generator as question_generator
 
 QUESTION_BASE_TEXT = "question_base_text"
 QUESTION_TEXT = "question_text"

@@ -10,10 +10,8 @@ from llama_index.core.workflow import Context, StopEvent, Workflow, step
 from openai import AsyncOpenAI
 
 import prompts
-from util import const
-from util.model import get_llm_models
-from workflow import utils as w_utils
-from workflow.events import (
+from backend import utils as w_utils
+from backend.events import (
     AudioFinishedEvent,
     AudioStartEvent,
     AudioStreamEvent,
@@ -22,6 +20,8 @@ from workflow.events import (
     LLMProgressEvent,
     LLMStartEvent,
 )
+from util import const
+from util.model import get_llm_models
 
 
 def build_message(message: str, history: list[dict]):

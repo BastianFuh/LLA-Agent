@@ -9,8 +9,8 @@ from llama_index.core.tools import FunctionTool
 from llama_index.core.workflow import Context
 
 import prompts
-from workflow import question_generator, utils
-from workflow.question_generator import tools as QGT
+from backend import question_generator, utils
+from backend.question_generator import tools as QGT
 
 
 class QuestionBuffer:
