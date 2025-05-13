@@ -1,16 +1,12 @@
 import logging
-import random
-from textwrap import TextWrapper, wrap
+from textwrap import TextWrapper
 
 import gradio as gr
 import numpy as np
-from elevenlabs import ElevenLabs
-from kokoro import KPipeline
 from llama_index.core.workflow import Context
-from openai import AsyncOpenAI
 
 import prompts
-from backend.audio import get_voice_samples
+from backend.audio import generate_audio
 from backend.chatbot.chatbot_workflow import ChatBotWorkfLow
 from backend.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
 from backend.question_generator import tools as QGT
@@ -474,132 +470,9 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
 
     sr = 24000
 
-    if tts_provider == const.TTS_KOKORO:
-        yield gr.Audio(value=None, streaming=True)
-        pipeline = KPipeline(lang_code="j", repo_id="hexgrad/Kokoro-82M")
-        generator = pipeline(
-            output_text,
-            voice="jf_alpha",  # <= change voice here
-            speed=1,
-            split_pattern=r"(\.|。|!|\?|！|？|、)",
-        )
+    for sr, audio_np in generate_audio(tts_provider, output_text, language):
+        yield (sr, audio_np)
 
-        for gs, ps, audio in generator:
-            yield (sr, audio.numpy())
-
-    if tts_provider == const.TTS_ELEVENLABS:
-        from io import BytesIO
-
-        client = ElevenLabs()
-
-        audio = client.text_to_speech.convert(
-            text=output_text,
-            voice_id="GxxMAMfQkDlnqjpzjLHH",
-            model_id="eleven_flash_v2_5",
-            output_format="pcm_24000",
-        )
-
-        stream = BytesIO()
-
-        for chunk in audio:
-            if chunk:
-                stream.write(chunk)
-        stream.seek(0)
-
-        # return_audio = np.frombuffer(audio, dtype=np.int16)
-        yield (sr, np.frombuffer(stream.getbuffer(), dtype=np.int16))
-
-    if tts_provider == const.TTS_OPENAI:
-        voices = [
-            "alloy",
-            "ballad",
-            "coral",
-            "echo",
-            "fable",
-            "onyx",
-            "nova",
-            "sage",
-            "shimmer",
-            "verse",
-        ]
-
-        instructions = f"""Language: Speak in {language} with a standard accent.
-
-                    Voice Affect: Composed; project authority and confidence.
-
-                    Tone: Sincere and authoritative—express genuine apology while conveying competence.
-
-                    Pacing: Steady and moderate.
-
-                    Pronunciation: Clear and precise."""
-
-        client = AsyncOpenAI()
-        response = await client.audio.speech.create(
-            model="gpt-4o-mini-tts",
-            voice=voices[random.randint(0, len(voices) - 1)],
-            input=output_text,
-            instructions=instructions,
-            response_format="pcm",
-        )
-        return_audio = np.frombuffer(response.content, dtype=np.int16)
-
-        yield (sr, return_audio)
-
-    if tts_provider == const.TTS_FISH_AUDIO:
-        import io
-        import wave
-
-        from fish_audio_sdk import ReferenceAudio, Session, TTSRequest
-
-        client = Session(apikey="LOCAL", base_url="http://127.0.0.1:8080")
-
-        sr = 21000
-
-        wave_file = io.BytesIO()
-
-        voices = get_voice_samples(language)
-
-        if len(voices) != 0:
-            # Select a random voice from the list
-            voice = voices[random.randint(0, len(voices) - 1)]
-
-            # Prepare the voice reference
-
-            audio_path = voice["audio_file"]
-
-            # Read wav file to bytes
-            with open(audio_path, "rb") as f:
-                voice_audio = f.read()
-
-            references = [
-                ReferenceAudio(
-                    audio=voice_audio,
-                    text=voice["text"],
-                )
-            ]
-        else:
-            references = []
-
-        for chunk in client.tts(
-            TTSRequest(text=output_text, format="wav", references=references)
-        ):
-            wave_file.write(chunk)
-        wave_file.seek(0)
-
-        with wave.open(wave_file, "rb") as wav_file:
-            num_channels = wav_file.getnchannels()
-            framerate = wav_file.getframerate()
-            num_frames = wav_file.getnframes()
-
-            audio_data = wav_file.readframes(num_frames)
-
-            audio_np = np.frombuffer(audio_data, dtype=np.int16)
-
-            # If stereo (2 channels), reshape to [num_frames, 2] array
-            if num_channels == 2:
-                audio_np = audio_np.reshape(-1, 2)
-        sr = framerate
-        yield (framerate, audio_np)
     # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
     # being yielded
     yield (sr, np.zeros(2400))
