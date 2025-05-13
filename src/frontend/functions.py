@@ -10,12 +10,12 @@ from llama_index.core.workflow import Context
 from openai import AsyncOpenAI
 
 import prompts
+from backend.audio import get_voice_samples
 from backend.chatbot.chatbot_workflow import ChatBotWorkfLow
 from backend.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
 from backend.question_generator import tools as QGT
 from backend.question_generator.base import QuestionBuffer, QuestionGenerator
 from util import const
-from util.audio import get_voice_samples
 
 text_wrapper = TextWrapper(width=37, expand_tabs=False, replace_whitespace=False)
 

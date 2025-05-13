@@ -5,7 +5,7 @@ import gradio as gr
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from phoenix.otel import register
 
-from util.audio import init_fish_audio_voice_samples
+from backend.audio import init_fish_audio_voice_samples
 from util.model import init_models
 
 logging.getLogger("faster_whisper").setLevel(logging.WARNING)
