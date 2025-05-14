@@ -1,8 +1,10 @@
 import random
 
+import numpy as np
 from llama_index.core.workflow import Context
 
 import backend.question_generator as question_generator
+from backend.audio import generate_audio
 
 QUESTION_BASE_TEXT = "question_base_text"
 QUESTION_TEXT = "question_text"
@@ -14,6 +16,8 @@ QUESTION_HINT = "question_hint"
 READING_COMPREHENSION_TOPIC = "reading_comprehension_topic"
 READING_COMPREHENSION_TEXT = "reading_comprehension_text"
 READING_COMPREHENSION_QUESTION = "reading_comprehension_question"
+
+AUDIO_DATA = "audio_data"
 
 _CREATE_QUESTION_BASE_TEXT_INSTRUCTION = """
 You have started the question generation with this text:
@@ -36,12 +40,46 @@ You have started the generation with this text:
 """
 
 
-async def finish() -> str:
+async def finish(context: Context) -> str:
     """This function is used to finish the current process or operation.
+    This must be called at the end of every process.
 
     Returns:
         str: Return information.
     """
+    question_type = await context.get("question_type")
+
+    match question_type:
+        case question_generator.READING_COMPREHENSION:
+            topic = await context.get(READING_COMPREHENSION_TOPIC, None)
+            text = await context.get(READING_COMPREHENSION_TEXT, None)
+            question = await context.get(READING_COMPREHENSION_QUESTION, None)
+
+            if topic is None:
+                return "You have not provided a topic for the reading comprehension. Please ensure that you have provided all the necessary information."
+
+            if text is None:
+                return "You have not provided a text for the reading comprehension. Please ensure that you have provided all the necessary information."
+
+            if question is None:
+                return "You have not provided a question for the reading comprehension. Please ensure that you have provided all the necessary information."
+
+            extra_parameters = await context.get("extra_parameters")
+
+            mode_switch = extra_parameters["mode_switch"]
+
+            if mode_switch:
+                complete_audio = np.array([])
+                tts_provider = extra_parameters["tts_provider"]
+                language = extra_parameters["language"]
+
+                audio_text = f"{topic}.\n {text}. \n {question}"
+
+                for sr, audio_np in generate_audio(tts_provider, audio_text, language):
+                    complete_audio = np.concatenate((complete_audio, audio_np))
+
+                await context.set(AUDIO_DATA, (sr, complete_audio))
+
     return "The process was finished."
 
 
@@ -231,4 +269,4 @@ async def create_reading_comprehension_question(context: Context, question: str)
 
     await context.set(READING_COMPREHENSION_QUESTION, question)
 
-    return "The process is now finished."
+    return "You have done everything you can now finish up."

@@ -2,6 +2,7 @@ import queue
 from hashlib import md5
 from typing import AsyncGenerator, Callable
 
+from librosa import ex
 from llama_index.core.agent.react import ReActChatFormatter
 from llama_index.core.agent.workflow import FunctionAgent, ReActAgent
 from llama_index.core.llms.function_calling import FunctionCallingLLM
@@ -84,7 +85,7 @@ class QuestionGenerator:
 
     def _get_agent(self, key: str, **kwargs) -> ReActAgent:
         tools = [
-            FunctionTool.from_defaults(QGT.finish, return_direct=True),
+            FunctionTool.from_defaults(QGT.finish),
         ]
 
         if key in [
@@ -166,6 +167,7 @@ class QuestionGenerator:
         language_proficiency: str,
         difficulty: str,
         additional_information: str,
+        extra_parameters: dict = None,
     ) -> Context:
         agent = self._get_agent(
             question_type,
@@ -177,6 +179,7 @@ class QuestionGenerator:
 
         ctx = Context(agent)
         await ctx.set("question_type", question_type)
+        await ctx.set("extra_parameters", extra_parameters)
 
         initial_message_prompt = self._get_initial_message_prompt(question_type)
 
@@ -238,13 +241,22 @@ class QuestionGenerator:
         language_proficiency: str,
         difficulty: str,
         additional_information: str,
+        mode_switch: bool = False,
+        tts_provider: str = None,
     ) -> AsyncGenerator[dict, None]:
+        extra_parameters = {
+            "mode_switch": mode_switch,
+            "tts_provider": tts_provider,
+            "language": language,
+        }
+
         return self._generate_question(
             question_generator.READING_COMPREHENSION,
             language,
             language_proficiency,
             difficulty,
             additional_information,
+            extra_parameters,
         )
 
     async def _handle_agent_result(self, ctx: Context, key: str) -> dict:
@@ -282,6 +294,7 @@ class QuestionGenerator:
                     QGT.READING_COMPREHENSION_QUESTION: await ctx.get(
                         QGT.READING_COMPREHENSION_QUESTION
                     ),
+                    QGT.AUDIO_DATA: await ctx.get(QGT.AUDIO_DATA, None),
                 }
 
             case _:
@@ -294,8 +307,18 @@ class QuestionGenerator:
         language_proficiency: str,
         difficulty: str,
         additional_information: str,
+        extra_parameters: dict = None,
     ) -> AsyncGenerator[dict, None]:
-        settings = [language, language_proficiency, difficulty, additional_information]
+        settings = [
+            language,
+            language_proficiency,
+            difficulty,
+            additional_information,
+        ]
+        if extra_parameters is not None:
+            for v in extra_parameters.values():
+                settings.append(str(v))
+
         generation_count = 2
         yielded_result = False
 
@@ -317,6 +340,7 @@ class QuestionGenerator:
                 language_proficiency,
                 difficulty,
                 additional_information,
+                extra_parameters,
             )
 
             output = await self._handle_agent_result(ctx, key)

@@ -158,7 +158,7 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Reading Comprehension", id=5, scale=1):
+        with gr.Tab("Reading|Listening Comprehension", id=5, scale=1):
             create_reading_comprehension_question(
                 browser_state,
                 create_state,
@@ -598,6 +598,7 @@ def create_reading_comprehension_question(
                         placeholder="Your question will be generated here",
                         interactive=False,
                         show_copy_button=True,
+                        lines=2,
                     )
                     answer = create_textbox_with_audio_input(
                         label="Answer",
@@ -606,7 +607,9 @@ def create_reading_comprehension_question(
                         submit_btn=True,
                     )
 
-                create_audio_output(tts_provider, language, topic, text, question)
+                audio_player = create_audio_output(
+                    tts_provider, language, topic, text, question
+                )
 
         chatbot = create_chatbot(
             "<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything"
@@ -625,8 +628,9 @@ def create_reading_comprehension_question(
                 difficulty,
                 additional_information,
                 mode_switch,
+                tts_provider,
             ],
-            [create_state, topic, text, question, answer],
+            [create_state, topic, text, question, answer, audio_player],
         )
 
         show_text_button.click(
@@ -684,6 +688,8 @@ def create_audio_output(tts_provider, language, *text_input_elements):
         inputs=[tts_provider, language] + list(text_input_elements),
         outputs=[audio_player],
     )
+
+    return audio_player
 
 
 def create_textbox_with_audio_input(**text_box_kargs) -> gr.Textbox:

@@ -1,4 +1,5 @@
 import logging
+from ast import mod
 from textwrap import TextWrapper
 
 import gradio as gr
@@ -430,17 +431,51 @@ async def create_reading_comprehension_question(
     difficulty: str,
     additional_information: str,
     mode_switch: bool,
+    tts_provider: str,
 ):
     _verify_input(language, language_proficiency, difficulty)
 
     state, question_generator = _get_question_generator(state, model)
 
+    yield (
+        gr.skip(),
+        gr.Textbox(value=""),
+        gr.TextArea(value=""),
+        gr.Textbox(value=""),
+        gr.Textbox(value="", info=""),
+        gr.Audio(
+            value=None,
+            streaming=False,
+            type="numpy",
+            label="Audio",
+            interactive=False,
+        ),
+    )
+
     async for question_data in question_generator.generate_reading_comprehension(
-        language, language_proficiency, difficulty, additional_information
+        language,
+        language_proficiency,
+        difficulty,
+        additional_information,
+        mode_switch,
+        tts_provider,
     ):
         topic = f"{question_data[QGT.READING_COMPREHENSION_TOPIC]}"
         text = f"{question_data[QGT.READING_COMPREHENSION_TEXT]}"
         question = f"{question_data[QGT.READING_COMPREHENSION_QUESTION]}"
+
+        if mode_switch:
+            audio_data = question_data[QGT.AUDIO_DATA]
+            sr = audio_data[0]
+            # The audio data is send here and then flushed when the rest of the data is sent
+            yield (
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                audio_data,
+            )
 
         wrapped_text = text_wrapper.fill(text)
 
@@ -451,6 +486,9 @@ async def create_reading_comprehension_question(
                 gr.TextArea(value=wrapped_text, visible=False),
                 gr.Textbox(value=question, visible=False),
                 gr.Textbox(value="", info=""),
+                # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
+                # being yielded
+                (sr, np.zeros(2400)),
             )
         else:
             yield (
@@ -459,9 +497,13 @@ async def create_reading_comprehension_question(
                 gr.TextArea(value=wrapped_text),
                 gr.Textbox(value=question),
                 gr.Textbox(value="", info=""),
+                (24000, np.zeros(2400)),
             )
 
-    yield gr.skip()
+    # if sr is not None:
+    #    yield (gr.skip(), gr.skip(), gr.skip(), gr.skip(), gr.skip(), (sr, np.zeros(2400)))
+    # else:
+    #    yield (gr.skip(), gr.skip(), gr.skip(), gr.skip(), gr.skip(), (sr, np.zeros(2400)))
 
 
 async def show_comprehension_text(state, topic: str, text: str, question: str):

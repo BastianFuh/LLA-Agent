@@ -14,6 +14,8 @@ The following are further instructions that should always be followed.
 
 - ALWAYS start your first thought with “The target language is: (target's language).”. This should help you remember the target language.
 - Use the tools provided to you to generate the question. The first user message will specify the order in which the tools should be used.
+- You MUST call functions to build the question.
+- You MUST finish your task by calling the finish function.
 
 ## Relevant Question and language Parameter
 
