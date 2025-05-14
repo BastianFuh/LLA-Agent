@@ -1,6 +1,8 @@
 import os
 
 import gradio as gr
+from gradio_toggle import Toggle
+from ollama import show
 
 import frontend.functions as F
 from util.const import (
@@ -560,27 +562,33 @@ def create_reading_comprehension_question(
     ):
         with gr.Row():
             # Topic and Text
-            with gr.Group():
-                topic = gr.Textbox(
-                    "",
-                    label="Topic",
-                    container=False,
-                    placeholder="The topic of the text",
-                    lines=1,
-                    interactive=False,
-                    show_label=False,
-                )
+            with gr.Column():
+                with gr.Group():
+                    mode_switch = Toggle(label="Listening Comprehension", value=False)
+                    show_text_button = gr.Button("Show Text")
+                with gr.Group():
+                    topic = gr.Textbox(
+                        "",
+                        label="Topic",
+                        container=False,
+                        placeholder="The topic of the text",
+                        lines=1,
+                        interactive=False,
+                        show_label=False,
+                    )
 
-                text = gr.TextArea(
-                    show_label=False,
-                    container=False,
-                    placeholder="The text of the reading comprehension",
-                    interactive=False,
-                    lines=11,
-                    autoscroll=True,
-                )
+                    text = gr.TextArea(
+                        show_label=False,
+                        container=False,
+                        placeholder="The text of the reading comprehension",
+                        interactive=False,
+                        lines=11,
+                        autoscroll=True,
+                    )
 
-                question_create_button = gr.Button("Next", elem_classes="next-button")
+                    question_create_button = gr.Button(
+                        "Next", elem_classes="next-button"
+                    )
 
             # Question and Answer
             with gr.Column():
@@ -616,8 +624,15 @@ def create_reading_comprehension_question(
                 language_proficiency,
                 difficulty,
                 additional_information,
+                mode_switch,
             ],
             [create_state, topic, text, question, answer],
+        )
+
+        show_text_button.click(
+            F.show_comprehension_text,
+            [create_state, topic, text, question],
+            [create_state, topic, text, question],
         )
 
         gr.on(
@@ -665,7 +680,7 @@ def create_audio_output(tts_provider, language, *text_input_elements):
         fn=F.clear,
         outputs=[audio_player],
     ).then(
-        fn=F.create_audio,
+        fn=F.get_audio,
         inputs=[tts_provider, language] + list(text_input_elements),
         outputs=[audio_player],
     )

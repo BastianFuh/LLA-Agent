@@ -423,12 +423,13 @@ async def create_translation_question(
 
 
 async def create_reading_comprehension_question(
-    state: gr.State,
+    state: dict,
     model: str,
     language: str,
     language_proficiency: str,
     difficulty: str,
     additional_information: str,
+    mode_switch: bool,
 ):
     _verify_input(language, language_proficiency, difficulty)
 
@@ -443,18 +444,36 @@ async def create_reading_comprehension_question(
 
         wrapped_text = text_wrapper.fill(text)
 
-        yield (
-            state,
-            gr.Textbox(value=topic),
-            gr.TextArea(value=wrapped_text),
-            gr.Textbox(value=question),
-            gr.Textbox(value="", info=""),
-        )
+        if mode_switch:
+            yield (
+                state,
+                gr.Textbox(value=topic, visible=False),
+                gr.TextArea(value=wrapped_text, visible=False),
+                gr.Textbox(value=question, visible=False),
+                gr.Textbox(value="", info=""),
+            )
+        else:
+            yield (
+                state,
+                gr.Textbox(value=topic),
+                gr.TextArea(value=wrapped_text),
+                gr.Textbox(value=question),
+                gr.Textbox(value="", info=""),
+            )
 
     yield gr.skip()
 
 
-async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
+async def show_comprehension_text(state, topic: str, text: str, question: str):
+    yield (
+        state,
+        gr.Textbox(value=topic, visible=True),
+        gr.TextArea(value=text, visible=True),
+        gr.Textbox(value=question, visible=True),
+    )
+
+
+async def get_audio(tts_provider: str, language: str, *args: tuple[str]):
     output_text = args[0]
     for arg in args[1:]:
         # The added dots should results in breaks during speaking
@@ -467,8 +486,6 @@ async def create_audio(tts_provider: str, language: str, *args: tuple[str]):
     yield gr.Audio(value=None, streaming=False)
 
     output_text = output_text.replace("\n", "")
-
-    sr = 24000
 
     for sr, audio_np in generate_audio(tts_provider, output_text, language):
         yield (sr, audio_np)
