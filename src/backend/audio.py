@@ -32,6 +32,8 @@ OPENAI_VOICES = [
     "verse",
 ]
 
+KOKORO_VOICES = ["jf_alpha", "jf_gongitsune", "jf_nezumi", "jf_tebukuro", "jm_kumo"]
+
 
 def _convert_mp3_to_wav(mp3_path: Path):
     """
@@ -116,12 +118,19 @@ def get_fish_audio_voice_samples(language: str) -> list[dict[Path, str]]:
     return voice_samples
 
 
-def _generate_audio_kokoro(text: str) -> Generator[Tuple[int, np.ndarray], None, None]:
+def _generate_audio_kokoro(
+    text: str, language: str, voice_id: int = -1
+) -> Generator[Tuple[int, np.ndarray], None, None]:
     pipeline = KPipeline(lang_code="j", repo_id="hexgrad/Kokoro-82M")
+
+    if voice_id < 0:
+        voice_id = get_random_voice_id_for_provider(const.TTS_KOKORO, language)
+
     generator = pipeline(
         text,
-        voice="jf_alpha",  # <= change voice here
+        voice=KOKORO_VOICES[voice_id],
         speed=1,
+        # Split into sections so that the audio has some small pauses on punctuation
         split_pattern=r"(\.|。|!|\?|！|？|、)",
     )
 
@@ -245,7 +254,7 @@ def generate_audio(
     tts_provider: str, text: str, language: str, voice_id: int = -1
 ) -> Generator[Tuple[int, np.ndarray], None, None]:
     if tts_provider == const.TTS_KOKORO:
-        for sr, audio_np in _generate_audio_kokoro(text):
+        for sr, audio_np in _generate_audio_kokoro(text, language, voice_id=voice_id):
             yield (sr, audio_np)
 
     if tts_provider == const.TTS_ELEVENLABS:
@@ -263,9 +272,14 @@ def generate_audio(
             yield (sr, audio_np)
 
 
-def get_random_voice_id_for_provider(tts_provider: str, language: str) -> int:
+def get_random_voice_id_for_provider(tts_provider: str, language: str) -> int | None:
+    if tts_provider == const.TTS_KOKORO:
+        return random.randint(0, len(KOKORO_VOICES) - 1)
+
     if tts_provider == const.TTS_OPENAI:
         return random.randint(0, len(OPENAI_VOICES) - 1)
 
     if tts_provider == const.TTS_FISH_AUDIO:
         return random.randint(0, len(get_fish_audio_voice_samples(language)) - 1)
+
+    return None
