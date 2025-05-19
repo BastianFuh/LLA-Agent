@@ -1,53 +1,91 @@
 # Language Learning Assistant Agent Platform (LLA-Agent)
 
-This project aims to create a comprehensive learning assistant by leveraging the power of AI to generate and evaluate questions similar to those seen in conventional learning literature or language exams.
-
-# Design
-
-The system is based on function-calling agents, which iteratively build the questions.  Information is not manually extracted from the LLM output but is given by the model by creating specific function calls. This makes the system more robust and allows errors to be corrected in each step. The relevant question data is collected across multiple steps and handed to the GUI for display.
-
-The evaluation for questions for which the answer can be derived from the generation is done by storing the correct answer. For more complex and open-ended questions, a chatbot is used. It will be given the entire context of the question and the user's response. After it has given its evaluation, further clarification questions about the problem can be asked.
-
-# Current Features
-
-Current question types include:
-
--	Multiple Choice
--	Fill in the blank
--	Translation with Chabot-based Evaluation
--	Reading Comprehension with Chabot-based Evaluation
-
-Additionally, these questions support optional audio output:
-
--	Translation
--	Reading Comprehension
-
-Currently supports models from OpenAI and DeepSeek.
-
-# Currently planned features
-
--	Listening Comprehension. Similar to Reading Comprehension, but with a different style of text. For example, the focus might be on conversations. 
--	Audio input
+LLA-Agent is an AI-powered platform designed to assist language learners by automatically generating and evaluating questions akin to those found in conventional language learning resources and standardized exams.
 
 
-# How to Use
+## Overview
 
-## Setup
+The platform utilizes function-calling agents to iteratively construct questions. Instead of manually parsing LLM (Large Language Model) output, the system leverages structured function calls, which enhances robustness and allows for correction at each stage of question generation. The relevant question data is accumulated across multiple steps and presented via the GUI.
 
-Todo
+Evaluation is handled in two ways:
+
+- **Objective questions**: The correct answer is stored and used for automated validation.
+- **Subjective/open-ended questions**: A chatbot evaluates responses based on the full context, offering follow-up clarification if needed.
+
+
+## Current Features
+
+### Supported question types:
+
+- Multiple Choice  
+- Fill-in-the-Blank  
+- Translation (with chatbot-based evaluation)  
+- Reading Comprehension (with chatbot-based evaluation)
+- Listening Comprehension 
+
+### Additional capabilities:
+
+- Optional audio input and output for:
+  - Translation
+  - Reading Comprehension
+
+
+### Model support:
+
+- **LLMs**
+  - **OpenAI** (API)
+  - **DeepSeek** (API)
+  - **Ollama**, Function calling models (local)
+    > ⚠️ Initial testing indicates that smaller models may struggle to follow instructions reliably. Further evaluation with newer or larger models is recommended.
+
+- **Text to Speech**
+  - **Kokoro** (Local)
+    - Currently only uses Japanese voices
+  - **Elevenlabs** (API)
+    - Voice configuration is not yet available
+    - Offers a limited amount of free credits
+    - Subscription-based pricing:
+      - Usage-based billing is unlocked at higher subscription tiers.
+      - Relatively expensive
+  - **Fish Audio** (Local, **Recommended**)
+    - Local use via [Fish Speech](https://github.com/fishaudio/fish-speech)
+    - Performs well even on modest hardware (e.g., tested on *RTX 4060 Ti*)
+    - Supports custom voices via simple file drop:
+      - Add an `.mp3` or `.wav` file to the `voice_reference` folder
+      - Custom voices showed better quality in testing
+    - Potential future support for API-based voices:
+      - Current API pricing appears reasonable
+
+## Currently planned features
+
+- **Listening Comprehension**: Focused on conversational texts
+
+
+
+## Getting Started
+
+### Setup
+
+> *To be completed.*
 
 ## Usage Guide
 
-Language, language proficiency (i.e., CEFR A1-C2, JLPT N5-N1), and question difficulty are defined in the sidebar. These values will be used in the prompts to generate the question or text. 
+- **Language & Proficiency**: Select the language and proficiency level (e.g., CEFR A1–C2, JLPT N5–N1) via the sidebar. These settings influence prompt generation.
+  
+- **Question Difficulty**: Adjustable via the interface; however, effects may vary due to limitations in LLM comprehension. Fine-tuning can be achieved using the **“Additional Information”** field.
 
-Via an “Additional Information” section, further instructions can be given to the model. This can be used to guide the generation process to specific topics or control the style of a question.
+- **Additional Instructions**: Customize prompts to guide content focus or question style more precisely.
 
-Regarding language proficiency. It seems that the model's understanding is currently quite limited and inconsistent. It might sometimes use a bit more complex phrasing than expected at the specified level.
+**Notes**:
 
-Regarding difficulty, the effect of this varies quite a bit, and sometimes, it might not seem to have any effect. However, better internal prompting might mitigate this in the future. Before that, the “Additional Information” section could be used to ask for more complex or simple questions by giving more precise instructions.
+- Language proficiency understanding by the model may be inconsistent.
+- Difficulty adjustments are not always reflected as expected. Use the “Additional Information” field to enforce complexity levels manually.
 
-# Limitations
 
-It’s important to remember that AI is far from perfect, so there is no 100% guarantee that everything it says will be correct. Therefore, it is crucial to double-check important facts. 
-There is also a chance that a question might be malformed or just sound 
+## Limitations
+
+While AI provides valuable assistance, it is not infallible. Users should:
+
+- Double-check factual accuracy, especially for critical information
+- Be aware that generated questions may occasionally be malformed or awkward
 
