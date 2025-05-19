@@ -197,7 +197,7 @@ def create_conversation_tab(
         placeholder="<strong>Your Personal Language Learning Assistant</strong><br>Ask Me Anything",
     )
     gr.ChatInterface(
-        fn=F.basic_chat,
+        fn=F.conversation_chat,
         type="messages",
         chatbot=chatbot,
         additional_inputs=[
@@ -370,7 +370,7 @@ def create_multiple_choice_questions(
 
         chatbot = create_chatbot()
         gr.ChatInterface(
-            fn=F.evaluation_chat,
+            fn=F.assistant_chat,
             type="messages",
             chatbot=chatbot,
             additional_inputs=[
@@ -448,7 +448,7 @@ def create_free_text_questions(
 
         chatbot = create_chatbot()
         gr.ChatInterface(
-            fn=F.evaluation_chat,
+            fn=F.assistant_chat,
             type="messages",
             chatbot=chatbot,
             additional_inputs=[

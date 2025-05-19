@@ -60,20 +60,20 @@ QUESTION_GENERATOR_TRANSLATION_REQUEST_PROMPT = (
 )
 
 
-CHATBOT_FUNCTION_PROMPT = (
+CONVERSATION_BOT_FUNCTION_PROMPT = (
     (Path(__file__).parents[0] / Path("chatbot") / Path("function_prompt.md"))
     .open("r", encoding="utf-8")
     .read()
 )
 
-EVALUATIONBOT_FUNCTION_PROMPT = (
-    (Path(__file__).parents[0] / Path("evaluation_bot") / Path("function_prompt.md"))
+ASSISTANT_BOT_FUNCTION_PROMPT = (
+    (Path(__file__).parents[0] / Path("assistant_bot") / Path("function_prompt.md"))
     .open("r", encoding="utf-8")
     .read()
 )
 
-EVALUATIONBOT_REACT_PROMPT = (
-    (Path(__file__).parents[0] / Path("evaluation_bot") / Path("react_prompt.md"))
+ASSISTANT_BOT_REACT_PROMPT = (
+    (Path(__file__).parents[0] / Path("assistant_bot") / Path("react_prompt.md"))
     .open("r", encoding="utf-8")
     .read()
 )

@@ -46,9 +46,9 @@ class ChatBotWorkfLow(Workflow):
     def _get_prompt_for_llm(self, llm):
         if self.prompt is None:
             if isinstance(llm, FunctionCallingLLM):
-                return prompts.EVALUATIONBOT_FUNCTION_PROMPT
+                return prompts.ASSISTANT_BOT_FUNCTION_PROMPT
             else:
-                return prompts.EVALUATIONBOT_REACT_PROMPT
+                return prompts.ASSISTANT_BOT_REACT_PROMPT
         else:
             if isinstance(self.prompt, str):
                 return self.prompt

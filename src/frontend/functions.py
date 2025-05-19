@@ -77,7 +77,7 @@ async def chat(
         gr.Error("There was an error. Please try again.")
 
 
-async def basic_chat(
+async def conversation_chat(
     message: str,
     history: list,
     is_stream: bool,
@@ -92,7 +92,7 @@ async def basic_chat(
 ):
     _verify_input(language, language_proficiency, difficulty)
 
-    prompt = prompts.CHATBOT_FUNCTION_PROMPT
+    prompt = prompts.CONVERSATION_BOT_FUNCTION_PROMPT
 
     options = {
         "language": language,
@@ -116,7 +116,7 @@ async def basic_chat(
         yield event
 
 
-async def evaluation_chat(
+async def assistant_chat(
     message: str,
     history: list,
     is_stream: bool,
