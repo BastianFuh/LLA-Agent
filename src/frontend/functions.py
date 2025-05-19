@@ -85,6 +85,45 @@ async def basic_chat(
     model: str,
     embedding_model: str,
     search_engine: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    _verify_input(language, language_proficiency, difficulty)
+
+    prompt = prompts.CHATBOT_FUNCTION_PROMPT
+
+    options = {
+        "language": language,
+        "language_proficiency": language_proficiency,
+        "difficulty": difficulty,
+        "additional_information": additional_information,
+    }
+
+    prompt = prompt.format(**options)
+
+    async for event in chat(
+        message,
+        history,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+        prompt,
+    ):
+        yield event
+
+
+async def evaluation_chat(
+    message: str,
+    history: list,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
 ):
     async for event in chat(
         message,

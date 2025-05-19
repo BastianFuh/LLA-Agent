@@ -59,14 +59,21 @@ QUESTION_GENERATOR_TRANSLATION_REQUEST_PROMPT = (
     .read()
 )
 
-CHATBOT_REACT_PROMPT = (
-    (Path(__file__).parents[0] / Path("chatbot") / Path("react_prompt.md"))
+
+CHATBOT_FUNCTION_PROMPT = (
+    (Path(__file__).parents[0] / Path("chatbot") / Path("function_prompt.md"))
     .open("r", encoding="utf-8")
     .read()
 )
 
-CHATBOT_FUNCTION_PROMPT = (
-    (Path(__file__).parents[0] / Path("chatbot") / Path("function_prompt.md"))
+EVALUATIONBOT_FUNCTION_PROMPT = (
+    (Path(__file__).parents[0] / Path("evaluation_bot") / Path("function_prompt.md"))
+    .open("r", encoding="utf-8")
+    .read()
+)
+
+EVALUATIONBOT_REACT_PROMPT = (
+    (Path(__file__).parents[0] / Path("evaluation_bot") / Path("react_prompt.md"))
     .open("r", encoding="utf-8")
     .read()
 )

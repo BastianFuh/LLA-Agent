@@ -102,14 +102,18 @@ def create_gui() -> gr.Blocks:
                 "Enable audio output for the chatbot.",
             )
 
-        with gr.Tab("ChatBot", id=1, scale=1):
-            create_chatbot_tab(
+        with gr.Tab("Conversation", id=1, scale=1):
+            create_conversation_tab(
                 browser_state,
                 is_stream,
                 audio_output,
                 model,
                 embedding_model,
                 search_engine,
+                language,
+                language_proficiency,
+                difficulty,
+                additional_information,
             )
 
         with gr.Tab("Multiple Choice", id=2, scale=1):
@@ -175,13 +179,17 @@ def create_gui() -> gr.Blocks:
             )
 
 
-def create_chatbot_tab(
+def create_conversation_tab(
     browser_state: gr.BrowserState,
     is_stream,
     audio_output,
     model,
     embedding_model,
     search_engine,
+    language,
+    language_proficiency,
+    difficulty,
+    additional_information,
 ):
     chatbot = gr.Chatbot(
         type="messages",
@@ -198,6 +206,10 @@ def create_chatbot_tab(
             model,
             embedding_model,
             search_engine,
+            language,
+            language_proficiency,
+            difficulty,
+            additional_information,
         ],
         fill_height=True,
     )
@@ -358,7 +370,7 @@ def create_multiple_choice_questions(
 
         chatbot = create_chatbot()
         gr.ChatInterface(
-            fn=F.basic_chat,
+            fn=F.evaluation_chat,
             type="messages",
             chatbot=chatbot,
             additional_inputs=[
@@ -436,7 +448,7 @@ def create_free_text_questions(
 
         chatbot = create_chatbot()
         gr.ChatInterface(
-            fn=F.basic_chat,
+            fn=F.evaluation_chat,
             type="messages",
             chatbot=chatbot,
             additional_inputs=[
