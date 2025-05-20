@@ -134,6 +134,17 @@ READING_COMPREHENSION_REQUEST_PROMPT = (
     .read()
 )
 
+INITIAL_MESSAGE_LISTENING_COMPREHENSION = (
+    (
+        Path(__file__).parents[0]
+        / Path("question_generator")
+        / Path("listening_comprehension")
+        / Path("initial_message.md")
+    )
+    .open("r", encoding="utf-8")
+    .read()
+)
+
 READING_COMPREHENSION_FUNCTION_CHATBOT_PROMPT = (
     (
         Path(__file__).parents[0]

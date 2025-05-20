@@ -292,6 +292,63 @@ async def reading_comprehension_verifier(
             )
 
 
+async def listening_comprehension_verifier(
+    state: dict,
+    topic: str,
+    question: str,
+    answer: str,
+    history: list,
+    is_stream: bool,
+    audio_output: bool,
+    model: str,
+    embedding_model: str,
+    search_engine: str,
+):
+    data = state["listening_comprehension_data"]
+
+    text = data[QGT.LISTENING_COMPREHENSION_TEXT]
+
+    complete_text = "\n".join(
+        [f"{text_segment['speaker']}: {text_segment['text']}" for text_segment in text]
+    )
+
+    chat_prompts = {
+        "function": prompts.READING_COMPREHENSION_FUNCTION_CHATBOT_PROMPT,
+        "react": prompts.READING_COMPREHENSION_REACT_CHATBOT_PROMPT,
+    }
+
+    if answer is None:
+        user_message = topic
+    else:
+        user_message = _create_reading_comprehension_user_message(
+            topic, complete_text, question, answer
+        )
+
+    # Update shown history
+    current_history = history.copy()
+    current_history.append({"role": "user", "content": user_message})
+    yield current_history
+
+    async for event in chat(
+        user_message,
+        history,
+        is_stream,
+        audio_output,
+        model,
+        embedding_model,
+        search_engine,
+        chat_prompts,
+    ):
+        if isinstance(event, str):
+            current_history.append({"role": "assistant", "content": event})
+
+            yield current_history
+        else:
+            logging.warning(
+                "Translation chat got an event which is currently not supported"
+            )
+
+
 def process_select(state, c1, c2, c3, c4):
     options = [c1, c2, c3, c4]
 
@@ -539,10 +596,97 @@ async def create_reading_comprehension_question(
                 (24000, np.zeros(2400)),
             )
 
-    # if sr is not None:
-    #    yield (gr.skip(), gr.skip(), gr.skip(), gr.skip(), gr.skip(), (sr, np.zeros(2400)))
-    # else:
-    #    yield (gr.skip(), gr.skip(), gr.skip(), gr.skip(), gr.skip(), (sr, np.zeros(2400)))
+
+async def create_listening_comprehension_question(
+    state: dict,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+    mode_switch: bool,
+    tts_provider: str,
+):
+    _verify_input(language, language_proficiency, difficulty)
+
+    state, question_generator = _get_question_generator(state, model)
+
+    yield (
+        gr.skip(),
+        gr.Textbox(value=""),
+        gr.Textbox(value=""),
+        gr.Textbox(value=""),
+        gr.Chatbot(value=[]),
+        gr.Textbox(value=""),
+        gr.Textbox(value="", info=""),
+        gr.Audio(
+            value=None,
+            streaming=False,
+            type="numpy",
+            label="Audio",
+            interactive=False,
+        ),
+    )
+
+    async for question_data in question_generator.generate_listening_comprehension(
+        language,
+        language_proficiency,
+        difficulty,
+        additional_information,
+        mode_switch,
+        tts_provider,
+    ):
+        state["listening_comprehension_data"] = question_data
+        topic = f"{question_data[QGT.LISTENING_COMPREHENSION_TOPIC]}"
+        speakers = question_data[QGT.LISTENING_COMPREHENSION_SPEAKERS]
+        text = question_data[QGT.LISTENING_COMPREHENSION_TEXT]
+        question = f"{question_data[QGT.LISTENING_COMPREHENSION_QUESTION]}"
+        audio_data = question_data[QGT.AUDIO_DATA]
+
+        if mode_switch:
+            audio_data = question_data[QGT.AUDIO_DATA]
+            sr = audio_data[0]
+            # The audio data is send here and then flushed when the rest of the data is sent
+            yield (
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                audio_data,
+            )
+
+        role_mapping = ["assistant", "user"]
+
+        text_messages = [
+            gr.ChatMessage(role=role_mapping[i % 2], content=text_segment["text"])
+            for i, text_segment in enumerate(text)
+        ]
+
+        if mode_switch:
+            yield (
+                state,
+                gr.Textbox(value=topic),
+                gr.Textbox(value=speakers[0]),
+                gr.Textbox(value=speakers[1]),
+                gr.skip(),
+                gr.Textbox(value=question),
+                gr.Textbox(value="", info=""),
+                (sr, np.zeros(2400)),
+            )
+        else:
+            yield (
+                state,
+                gr.Textbox(value=topic),
+                gr.Textbox(value=speakers[0]),
+                gr.Textbox(value=speakers[1]),
+                text_messages,
+                gr.Textbox(value=question),
+                gr.Textbox(value="", info=""),
+                (24000, np.zeros(2400)),
+            )
 
 
 async def show_comprehension_text(state, topic: str, text: str, question: str):
@@ -551,6 +695,24 @@ async def show_comprehension_text(state, topic: str, text: str, question: str):
         gr.Textbox(value=topic, visible=True),
         gr.TextArea(value=text, visible=True),
         gr.Textbox(value=question, visible=True),
+    )
+
+
+async def show_listening_comprehension_text(state):
+    role_mapping = ["assistant", "user"]
+
+    data = state["listening_comprehension_data"]
+
+    text = data[QGT.LISTENING_COMPREHENSION_TEXT]
+
+    text_messages = [
+        gr.ChatMessage(role=role_mapping[i % 2], content=text_segment["text"])
+        for i, text_segment in enumerate(text)
+    ]
+
+    yield (
+        state,
+        text_messages,
     )
 
 

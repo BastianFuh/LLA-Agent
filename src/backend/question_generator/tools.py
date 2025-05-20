@@ -1,10 +1,13 @@
+import logging
 import random
 
 import numpy as np
 from llama_index.core.workflow import Context
 
 import backend.question_generator as question_generator
-from backend.audio import generate_audio
+from backend.audio import generate_audio, get_random_voice_id_for_provider
+
+logger = logging.getLogger(__name__)
 
 QUESTION_BASE_TEXT = "question_base_text"
 QUESTION_TEXT = "question_text"
@@ -16,6 +19,11 @@ QUESTION_HINT = "question_hint"
 READING_COMPREHENSION_TOPIC = "reading_comprehension_topic"
 READING_COMPREHENSION_TEXT = "reading_comprehension_text"
 READING_COMPREHENSION_QUESTION = "reading_comprehension_question"
+
+LISTENING_COMPREHENSION_TOPIC = "listening_comprehension_topic"
+LISTENING_COMPREHENSION_SPEAKERS = "listening_comprehension_speakers"
+LISTENING_COMPREHENSION_TEXT = "listening_comprehension_text"
+LISTENING_COMPREHENSION_QUESTION = "listening_comprehension_question"
 
 AUDIO_DATA = "audio_data"
 
@@ -30,7 +38,7 @@ Every following step MUST ensure that the question is about {focus}.
 
 """
 
-_CREATE_READING_COMPREHENSION_BASE_TEXT_INSTRUCTION = """
+_CREATE_COMPREHENSION_BASE_TEXT_INSTRUCTION = """
 You have started the generation with this text:
 
 ```
@@ -76,6 +84,81 @@ async def finish(context: Context) -> str:
                 audio_text = f"{topic}.\n {text}. \n {question}"
 
                 for sr, audio_np in generate_audio(tts_provider, audio_text, language):
+                    complete_audio = np.concatenate((complete_audio, audio_np))
+
+                await context.set(AUDIO_DATA, (sr, complete_audio))
+
+        case question_generator.LISTENING_COMPREHENSION:
+            topic = await context.get(LISTENING_COMPREHENSION_TOPIC, None)
+            speakers = await context.get(LISTENING_COMPREHENSION_SPEAKERS, None)
+            text = await context.get(LISTENING_COMPREHENSION_TEXT, None)
+            question = await context.get(LISTENING_COMPREHENSION_QUESTION, None)
+
+            if topic is None:
+                return "You have not provided a topic for the listening comprehension. Please ensure that you have provided all the necessary information."
+            if speakers is None:
+                return "You have not provided a speakers for the listening comprehension. Please ensure that you have provided all the necessary information."
+            if text is None:
+                return "You have not provided a text for the listening comprehension. Please ensure that you have provided all the necessary information."
+            if question is None:
+                return "You have not provided a question for the listening comprehension. Please ensure that you have provided all the necessary information."
+
+            extra_parameters = await context.get("extra_parameters")
+
+            mode_switch = extra_parameters["mode_switch"]
+
+            logger.info(extra_parameters)
+
+            if mode_switch:
+                complete_audio = np.array([])
+                tts_provider = extra_parameters["tts_provider"]
+                language = extra_parameters["language"]
+
+                first_speaker_voice_id = get_random_voice_id_for_provider(
+                    tts_provider, language
+                )
+                second_speaker_voice_id = get_random_voice_id_for_provider(
+                    tts_provider, language, exclude_ids=[first_speaker_voice_id]
+                )
+
+                third_speaker_voice_id = get_random_voice_id_for_provider(
+                    tts_provider,
+                    language,
+                    exclude_ids=[first_speaker_voice_id, second_speaker_voice_id],
+                )
+
+                text_voices = [first_speaker_voice_id, second_speaker_voice_id]
+
+                # Topic audio
+                for sr, audio_np in generate_audio(
+                    tts_provider, topic, language, third_speaker_voice_id
+                ):
+                    complete_audio = np.concatenate((complete_audio, audio_np))
+
+                complete_audio = np.concatenate((complete_audio, np.zeros(2 * sr)))
+
+                i = 0
+
+                for text_segment in text:
+                    audio_text = text_segment["text"]
+
+                    for sr, audio_np in generate_audio(
+                        tts_provider,
+                        audio_text,
+                        language,
+                        voice_id=text_voices[i % 2],
+                    ):
+                        complete_audio = np.concatenate((complete_audio, audio_np))
+                    i += 1
+                    # Add silence between segments
+                    complete_audio = np.concatenate((complete_audio, np.zeros(sr)))
+
+                complete_audio = np.concatenate((complete_audio, np.zeros(2 * sr)))
+
+                # Question audio
+                for sr, audio_np in generate_audio(
+                    tts_provider, question, language, third_speaker_voice_id
+                ):
                     complete_audio = np.concatenate((complete_audio, audio_np))
 
                 await context.set(AUDIO_DATA, (sr, complete_audio))
@@ -234,7 +317,7 @@ async def create_reading_comprehension_topic(
 
     await context.set(READING_COMPREHENSION_TOPIC, topic)
 
-    return _CREATE_READING_COMPREHENSION_BASE_TEXT_INSTRUCTION.format(text=topic)
+    return _CREATE_COMPREHENSION_BASE_TEXT_INSTRUCTION.format(text=topic)
 
 
 async def create_reading_comprehension_text(context: Context, text: str) -> str:
@@ -268,5 +351,102 @@ async def create_reading_comprehension_question(context: Context, question: str)
     """
 
     await context.set(READING_COMPREHENSION_QUESTION, question)
+
+    return "You have done everything you can now finish up."
+
+
+async def create_listening_comprehension_topic(
+    context: Context, topics: list[str]
+) -> str:
+    """Creates a topic of a comprehension problem.
+
+    It takes a list of potential topics from which one will be selected.
+    The topics should be diverse and different from each other.
+
+    Args:
+        context (Context): context
+        topics (list[str]): List of potential topics. Should contain atleast 5 elements.
+
+    Returns:
+        str: Tool response
+    """
+    if len(topics) < 5:
+        return "Please ensure that the topics list contains atleast 5 options."
+
+    topic = topics[random.randint(0, len(topics) - 1)]
+
+    await context.set(LISTENING_COMPREHENSION_TOPIC, topic)
+
+    return _CREATE_COMPREHENSION_BASE_TEXT_INSTRUCTION.format(text=topic)
+
+
+async def create_listening_comprehension_speakers(
+    context: Context, speakers: list[str]
+) -> str:
+    """Creates a list of speakers for the comprehension problem.
+
+    It takes a list of two speakers which will be the speakers of the comprehension problem.
+
+    Args:
+        context (Context): context
+        speakers (list[str]): List of speakers. Should contain exactly 2 elements.
+
+    Returns:
+        str: Tool response
+    """
+
+    await context.set(LISTENING_COMPREHENSION_SPEAKERS, speakers)
+
+    return f"In the next step you will generate the text for the comprehension problem. Please use the speakers you just provided. Speaker 1 is {speakers[0]} and speaker 2 is {speakers[1]}."
+
+
+async def create_listening_comprehension_text(
+    context: Context, text: list[dict]
+) -> str:
+    """Create the text for the choosen topic.
+
+    The generated text should be relevant to the topic.
+    It MUST NOT add the topic at the beginning of the text.
+
+    The text should be a list of dictionaries with the following structure:
+    [
+        {
+            "text": "The text",
+            "speaker": "First speaker",
+        },
+        {
+            "text": "The text",
+            "speaker": "Second speaker",
+        },
+        ...
+    ]
+
+    Args:
+        context (Context): context
+        text (list[dict]): The text for the given topic.
+
+    Returns:
+        str: Tool response
+    """
+
+    await context.set(LISTENING_COMPREHENSION_TEXT, text)
+
+    return "Now generate a question for the given text."
+
+
+async def create_listening_comprehension_question(
+    context: Context, question: str
+) -> str:
+    """Create a question for give reading comprehension problem.
+
+    Args:
+        context (Context): context
+        question (str): The question based on the topic and text.
+
+    Returns:
+        str: Tool response
+    """
+
+    await context.set(LISTENING_COMPREHENSION_QUESTION, question)
 
     return "You have done everything you can now finish up."

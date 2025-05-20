@@ -1,6 +1,7 @@
 import json
 import logging
 import random
+import re
 from pathlib import Path
 from typing import Generator, Tuple
 
@@ -8,6 +9,7 @@ import numpy as np
 from elevenlabs import ElevenLabs
 from faster_whisper import WhisperModel
 from kokoro import KPipeline
+from matplotlib.backend_bases import NonGuiException
 from openai import OpenAI
 from pydub import AudioSegment
 
@@ -116,6 +118,40 @@ def get_fish_audio_voice_samples(language: str) -> list[dict[Path, str]]:
                 )
 
     return voice_samples
+
+
+def _get_id_with_exluded_ids(num_voices: int, exclude_ids: list[int] = []) -> int:
+    voice_ids = list(range(num_voices))
+
+    for voice_id in exclude_ids:
+        if voice_id in voice_ids:
+            voice_ids.remove(voice_id)
+
+    if len(voice_ids) == 0:
+        return 0
+
+    return random.choice(voice_ids)
+
+
+def get_random_voice_id_for_provider(
+    tts_provider: str, language: str, exclude_ids: list[int] = []
+) -> int | None:
+    """
+    Get the voice samples for a specific language and TTS provider
+    """
+
+    if tts_provider == const.TTS_KOKORO:
+        return _get_id_with_exluded_ids(len(KOKORO_VOICES), exclude_ids)
+
+    if tts_provider == const.TTS_OPENAI:
+        return _get_id_with_exluded_ids(len(OPENAI_VOICES), exclude_ids)
+
+    if tts_provider == const.TTS_FISH_AUDIO:
+        return _get_id_with_exluded_ids(
+            len(get_fish_audio_voice_samples(language)), exclude_ids
+        )
+
+    return NonGuiException
 
 
 def _generate_audio_kokoro(
@@ -270,16 +306,3 @@ def generate_audio(
             text, language, voice_id=voice_id
         ):
             yield (sr, audio_np)
-
-
-def get_random_voice_id_for_provider(tts_provider: str, language: str) -> int | None:
-    if tts_provider == const.TTS_KOKORO:
-        return random.randint(0, len(KOKORO_VOICES) - 1)
-
-    if tts_provider == const.TTS_OPENAI:
-        return random.randint(0, len(OPENAI_VOICES) - 1)
-
-    if tts_provider == const.TTS_FISH_AUDIO:
-        return random.randint(0, len(get_fish_audio_voice_samples(language)) - 1)
-
-    return None

@@ -80,6 +80,9 @@ class QuestionGenerator:
             case question_generator.READING_COMPREHENSION:
                 return prompts.INITIAL_MESSAGE_READING_COMPREHENSION
 
+            case question_generator.LISTENING_COMPREHENSION:
+                return prompts.INITIAL_MESSAGE_LISTENING_COMPREHENSION
+
             case _:
                 raise ValueError("Unknown question type")
 
@@ -113,6 +116,20 @@ class QuestionGenerator:
             )
             tools.append(
                 FunctionTool.from_defaults(QGT.create_reading_comprehension_question)
+            )
+
+        if key in [question_generator.LISTENING_COMPREHENSION]:
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_listening_comprehension_topic)
+            )
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_listening_comprehension_speakers)
+            )
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_listening_comprehension_text)
+            )
+            tools.append(
+                FunctionTool.from_defaults(QGT.create_listening_comprehension_question)
             )
 
         if isinstance(self.llm, FunctionCallingLLM):
@@ -259,6 +276,30 @@ class QuestionGenerator:
             extra_parameters,
         )
 
+    def generate_listening_comprehension(
+        self,
+        language: str,
+        language_proficiency: str,
+        difficulty: str,
+        additional_information: str,
+        mode_switch: bool = False,
+        tts_provider: str = None,
+    ) -> AsyncGenerator[dict, None]:
+        extra_parameters = {
+            "mode_switch": mode_switch,
+            "tts_provider": tts_provider,
+            "language": language,
+        }
+
+        return self._generate_question(
+            question_generator.LISTENING_COMPREHENSION,
+            language,
+            language_proficiency,
+            difficulty,
+            additional_information,
+            extra_parameters,
+        )
+
     async def _handle_agent_result(self, ctx: Context, key: str) -> dict:
         match key:
             case question_generator.MULTI_CHOICE:
@@ -293,6 +334,23 @@ class QuestionGenerator:
                     ),
                     QGT.READING_COMPREHENSION_QUESTION: await ctx.get(
                         QGT.READING_COMPREHENSION_QUESTION
+                    ),
+                    QGT.AUDIO_DATA: await ctx.get(QGT.AUDIO_DATA, None),
+                }
+
+            case question_generator.LISTENING_COMPREHENSION:
+                return {
+                    QGT.LISTENING_COMPREHENSION_TOPIC: await ctx.get(
+                        QGT.LISTENING_COMPREHENSION_TOPIC
+                    ),
+                    QGT.LISTENING_COMPREHENSION_SPEAKERS: await ctx.get(
+                        QGT.LISTENING_COMPREHENSION_SPEAKERS
+                    ),
+                    QGT.LISTENING_COMPREHENSION_TEXT: await ctx.get(
+                        QGT.LISTENING_COMPREHENSION_TEXT
+                    ),
+                    QGT.LISTENING_COMPREHENSION_QUESTION: await ctx.get(
+                        QGT.LISTENING_COMPREHENSION_QUESTION
                     ),
                     QGT.AUDIO_DATA: await ctx.get(QGT.AUDIO_DATA, None),
                 }
