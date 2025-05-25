@@ -102,7 +102,7 @@ def create_gui() -> gr.Blocks:
                 "Enable audio output for the chatbot.",
             )
 
-        with gr.Tab("Conversation", id=1, scale=1):
+        with gr.Tab("Conversation Exercise", id=1, scale=1):
             create_conversation_tab(
                 browser_state,
                 is_stream,
@@ -116,7 +116,7 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Multiple Choice", id=2, scale=1):
+        with gr.Tab("Multiple Choice Fill-in-the-blank", id=2, scale=1):
             create_multiple_choice_questions(
                 browser_state,
                 create_state,
@@ -131,7 +131,7 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Simple Free Text", id=3, scale=1):
+        with gr.Tab("Constructed response fill-in-the-blank", id=3, scale=1):
             create_free_text_questions(
                 browser_state,
                 create_state,
@@ -162,7 +162,7 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Reading|Listening Comprehension", id=5, scale=1):
+        with gr.Tab("Comprehension - Monologue", id=5, scale=1):
             create_reading_comprehension_question(
                 browser_state,
                 create_state,
@@ -178,7 +178,7 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Listening Comprehension", id=6, scale=1):
+        with gr.Tab("Comprehension - Dialogue", id=6, scale=1):
             create_listening_comprehension_question(
                 browser_state,
                 create_state,
