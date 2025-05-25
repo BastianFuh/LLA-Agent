@@ -784,9 +784,7 @@ def create_listening_comprehension_question(
                             submit_btn=True,
                         )
 
-                    audio_player = gr.Audio(
-                        interactive=False, type="numpy", streaming=True
-                    )
+                    audio_player = gr.Audio(interactive=False, type="numpy")
 
         chatbot = create_chatbot(
             "<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything"
@@ -861,9 +859,7 @@ def create_listening_comprehension_question(
 
 def create_audio_output(tts_provider, language, *text_input_elements):
     with gr.Group():
-        audio_player = gr.Audio(
-            interactive=False, scale=4, type="numpy", streaming=True
-        )
+        audio_player = gr.Audio(interactive=False, scale=4, type="numpy")
         generate_button = gr.Button("Generate Audio", scale=1)
 
     generate_button.click(

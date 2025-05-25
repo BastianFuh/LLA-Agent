@@ -81,9 +81,30 @@ async def finish(context: Context) -> str:
                 tts_provider = extra_parameters["tts_provider"]
                 language = extra_parameters["language"]
 
-                audio_text = f"{topic}.\n {text}. \n {question}"
+                general_speaker = get_random_voice_id_for_provider(
+                    tts_provider, language
+                )
+                text_speaker = get_random_voice_id_for_provider(
+                    tts_provider, language, exclude_ids=[general_speaker]
+                )
 
-                for sr, audio_np in generate_audio(tts_provider, audio_text, language):
+                for sr, audio_np in generate_audio(
+                    tts_provider, topic, language, general_speaker
+                ):
+                    complete_audio = np.concatenate((complete_audio, audio_np))
+
+                complete_audio = np.concatenate((complete_audio, np.zeros(2 * sr)))
+
+                for sr, audio_np in generate_audio(
+                    tts_provider, text, language, text_speaker
+                ):
+                    complete_audio = np.concatenate((complete_audio, audio_np))
+
+                complete_audio = np.concatenate((complete_audio, np.zeros(2 * sr)))
+
+                for sr, audio_np in generate_audio(
+                    tts_provider, question, language, general_speaker
+                ):
                     complete_audio = np.concatenate((complete_audio, audio_np))
 
                 await context.set(AUDIO_DATA, (sr, complete_audio))
@@ -106,8 +127,6 @@ async def finish(context: Context) -> str:
             extra_parameters = await context.get("extra_parameters")
 
             mode_switch = extra_parameters["mode_switch"]
-
-            logger.info(extra_parameters)
 
             if mode_switch:
                 complete_audio = np.array([])

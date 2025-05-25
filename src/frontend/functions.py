@@ -7,7 +7,7 @@ import numpy as np
 from llama_index.core.workflow import Context
 
 import prompts
-from backend.audio import generate_audio
+from backend.audio import generate_audio, get_random_voice_id_for_provider
 from backend.chatbot.chatbot_workflow import ChatBotWorkfLow
 from backend.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
 from backend.question_generator import tools as QGT
@@ -539,13 +539,7 @@ async def create_reading_comprehension_question(
         gr.TextArea(value=""),
         gr.Textbox(value=""),
         gr.Textbox(value="", info=""),
-        gr.Audio(
-            value=None,
-            streaming=False,
-            type="numpy",
-            label="Audio",
-            interactive=False,
-        ),
+        gr.skip(),
     )
 
     async for question_data in question_generator.generate_reading_comprehension(
@@ -560,19 +554,6 @@ async def create_reading_comprehension_question(
         text = f"{question_data[QGT.READING_COMPREHENSION_TEXT]}"
         question = f"{question_data[QGT.READING_COMPREHENSION_QUESTION]}"
 
-        if mode_switch:
-            audio_data = question_data[QGT.AUDIO_DATA]
-            sr = audio_data[0]
-            # The audio data is send here and then flushed when the rest of the data is sent
-            yield (
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                audio_data,
-            )
-
         wrapped_text = text_wrapper.fill(text)
 
         if mode_switch:
@@ -582,9 +563,7 @@ async def create_reading_comprehension_question(
                 gr.TextArea(value=wrapped_text, visible=False),
                 gr.Textbox(value=question, visible=False),
                 gr.Textbox(value="", info=""),
-                # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
-                # being yielded
-                (sr, np.zeros(2400)),
+                question_data[QGT.AUDIO_DATA],
             )
         else:
             yield (
@@ -593,7 +572,7 @@ async def create_reading_comprehension_question(
                 gr.TextArea(value=wrapped_text),
                 gr.Textbox(value=question),
                 gr.Textbox(value="", info=""),
-                (24000, np.zeros(2400)),
+                gr.skip(),
             )
 
 
@@ -616,16 +595,10 @@ async def create_listening_comprehension_question(
         gr.Textbox(value=""),
         gr.Textbox(value=""),
         gr.Textbox(value=""),
-        gr.Chatbot(value=[]),
+        gr.Chatbot(value=[], type="messages"),
         gr.Textbox(value=""),
         gr.Textbox(value="", info=""),
-        gr.Audio(
-            value=None,
-            streaming=False,
-            type="numpy",
-            label="Audio",
-            interactive=False,
-        ),
+        gr.skip(),
     )
 
     async for question_data in question_generator.generate_listening_comprehension(
@@ -641,22 +614,6 @@ async def create_listening_comprehension_question(
         speakers = question_data[QGT.LISTENING_COMPREHENSION_SPEAKERS]
         text = question_data[QGT.LISTENING_COMPREHENSION_TEXT]
         question = f"{question_data[QGT.LISTENING_COMPREHENSION_QUESTION]}"
-        audio_data = question_data[QGT.AUDIO_DATA]
-
-        if mode_switch:
-            audio_data = question_data[QGT.AUDIO_DATA]
-            sr = audio_data[0]
-            # The audio data is send here and then flushed when the rest of the data is sent
-            yield (
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                audio_data,
-            )
 
         role_mapping = ["assistant", "user"]
 
@@ -674,7 +631,7 @@ async def create_listening_comprehension_question(
                 gr.skip(),
                 gr.Textbox(value=question),
                 gr.Textbox(value="", info=""),
-                (sr, np.zeros(2400)),
+                question_data[QGT.AUDIO_DATA],
             )
         else:
             yield (
@@ -685,7 +642,7 @@ async def create_listening_comprehension_question(
                 text_messages,
                 gr.Textbox(value=question),
                 gr.Textbox(value="", info=""),
-                (24000, np.zeros(2400)),
+                gr.skip(),
             )
 
 
@@ -717,25 +674,15 @@ async def show_listening_comprehension_text(state):
 
 
 async def get_audio(tts_provider: str, language: str, *args: tuple[str]):
-    output_text = args[0]
-    for arg in args[1:]:
-        # The added dots should results in breaks during speaking
-        if tts_provider == const.TTS_KOKORO:
-            output_text += ". " + arg
-        else:
-            output_text += arg
+    complete_audio = np.array([])
 
-    # Clear current audio
-    yield gr.Audio(value=None, streaming=False)
+    for text in args:
+        for sr, audio_np in generate_audio(tts_provider, text, language):
+            complete_audio = np.concatenate((complete_audio, audio_np))
 
-    output_text = output_text.replace("\n", "")
+        complete_audio = np.concatenate((complete_audio, np.zeros(2 * sr)))
 
-    for sr, audio_np in generate_audio(tts_provider, output_text, language):
-        yield (sr, audio_np)
-
-    # Flushes the output, because if audio is streamed, it sometimes does not realize only one message
-    # being yielded
-    yield (sr, np.zeros(2400))
+    yield (sr, complete_audio)
 
 
 def clear():
