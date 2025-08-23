@@ -34,7 +34,7 @@ async def get_llms_tools(ctx: Context) -> list:
     return llm_tools
 
 
-def get_llm(model: str, temperature=1.2, max_tokens=1024):
+def get_llm(model: str):
     model_information = get_llm_models()[model]
 
     model_name = model_information[0]
@@ -43,26 +43,17 @@ def get_llm(model: str, temperature=1.2, max_tokens=1024):
         case const.PROVIDER_DEEPSEEK:
             return DeepSeek(
                 model=model_name,
-                temperature=temperature,
-                max_tokens=max_tokens,
                 is_function_calling_model=True,
                 is_chat_model=True,
             )
         case const.PROVIDER_OPENAI:
-            return OpenAI(
-                model=model_name, temperature=temperature, max_tokens=max_tokens
-            )
+            return OpenAI(model=model_name)
         case const.PROVIDER_OPENROUTER:
-            return OpenRouter(
-                model=model_name, temperature=temperature, max_tokens=max_tokens
-            )
+            return OpenRouter(model=model_name)
         case const.PROVIDER_OLLAMA:
             # Ollama does not like temperatures above 1
-            temperature = 1 if temperature > 1 else temperature
             return Ollama(
                 model=model_name,
-                temperature=temperature,
-                max_tokens=max_tokens,
                 is_chat_model=True,
             )
         case _:
