@@ -19,6 +19,18 @@ OPTION_MODEL: OptionType = {
     "OpenAI: GPT-4.1 mini": ("gpt-4.1-mini-2025-04-14", PROVIDER_OPENAI),
     "OpenAI: GPT-4.1 nano": ("gpt-4.1-nano-2025-04-14", PROVIDER_OPENAI),
     "OpenAI: GPT-4.1": ("gpt-4.1-2025-04-14", PROVIDER_OPENAI),
+    "OpenAI: GPT-5": (
+        "gpt-5-2025-08-07",
+        PROVIDER_OPENAI,
+    ),
+    "OpenAI: GPT-5 mini": (
+        "gpt-5-mini-2025-08-07",
+        PROVIDER_OPENAI,
+    ),
+    "OpenAI: GPT-5 nano": (
+        "gpt-5-nano-2025-08-07",
+        PROVIDER_OPENAI,
+    ),
     "Deepseek: DeepSeek-V3": ("deepseek-chat", PROVIDER_DEEPSEEK),
     "Deepseek: DeepSeek-R1": ("deepseek-reasoner", PROVIDER_DEEPSEEK),
 }
