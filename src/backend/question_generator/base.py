@@ -1,8 +1,8 @@
+import logging
 import queue
 from hashlib import md5
-from typing import AsyncGenerator, Callable
+from typing import AsyncGenerator
 
-from librosa import ex
 from llama_index.core.agent.react import ReActChatFormatter
 from llama_index.core.agent.workflow import FunctionAgent, ReActAgent
 from llama_index.core.llms.function_calling import FunctionCallingLLM
@@ -12,6 +12,8 @@ from llama_index.core.workflow import Context
 import prompts
 from backend import question_generator, utils
 from backend.question_generator import tools as QGT
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionBuffer:
@@ -86,7 +88,7 @@ class QuestionGenerator:
             case _:
                 raise ValueError("Unknown question type")
 
-    def _get_agent(self, key: str, **kwargs) -> ReActAgent:
+    def _get_agent(self, key: str, **kwargs) -> ReActAgent | FunctionAgent:
         tools = [
             FunctionTool.from_defaults(QGT.finish),
         ]
@@ -200,10 +202,14 @@ class QuestionGenerator:
 
         initial_message_prompt = self._get_initial_message_prompt(question_type)
 
-        await agent.run(
-            initial_message_prompt,
-            ctx=ctx,
-        )
+        try:
+            await agent.run(
+                initial_message_prompt,
+                ctx=ctx,
+            )
+        except Exception as e:
+            logger.error(f"An exception occured during the agent execution: {e}")
+            raise e
 
         return ctx
 
