@@ -1,9 +1,9 @@
 @echo off
 echo Find conda installation...
 REM --- Dynamically find the conda executable ---
-for /f "delims=" %%i in ('where conda') do set CONDA_PATH=%%i
+for /f "delims=" %%i in ('where conda') do set CONDA_CMD=%%i
 
-echo Found conda at %CONDA_PATH%
+echo Found conda at %CONDA_CMD%
 REM --- Strip the trailing "\Scripts\conda.exe" to get the root folder ---
 REM Remove \Scripts\conda.exe or \Library\bin\conda.bat
 set CONDA_ROOT=%CONDA_CMD%
