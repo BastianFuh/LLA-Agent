@@ -8,7 +8,7 @@ from phoenix.otel import register
 from backend.audio import init_fish_audio_voice_samples
 from util.model import init_models
 
-logging.getLogger("faster_whisper").setLevel(logging.WARNING)
+logging.getLogger("faster_whisper").setLevel(logging.DEBUG)
 root_logger = logging.getLogger(__name__)
 
 

@@ -13,7 +13,7 @@ from util.model import get_llm_models
 async def get_llms_tools(ctx: Context) -> list:
     llm_tools = list([FunctionTool.from_defaults(tools.think)])
 
-    search_engine = await ctx.get(const.SEARCH_ENGINE, default=const.NONE)
+    search_engine = await ctx.store.get(const.SEARCH_ENGINE, default=const.NONE)
 
     if search_engine == const.TAVILY:
         # API Keys are provided via the environment but because the tools do not have

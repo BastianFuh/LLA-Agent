@@ -46,11 +46,11 @@ async def chat(
         )
 
         ctx = Context(workflow)
-        await ctx.set(const.IS_STREAM, is_stream)
-        await ctx.set(const.AUDIO_OUTPUT, audio_output)
-        await ctx.set(const.MODEL, model)
-        await ctx.set(const.EMBEDDING_MODEL, embedding_model)
-        await ctx.set(const.SEARCH_ENGINE, search_engine)
+        await ctx.store.set(const.IS_STREAM, is_stream)
+        await ctx.store.set(const.AUDIO_OUTPUT, audio_output)
+        await ctx.store.set(const.MODEL, model)
+        await ctx.store.set(const.EMBEDDING_MODEL, embedding_model)
+        await ctx.store.set(const.SEARCH_ENGINE, search_engine)
         response = ""
 
         start_event = ChatBotStartEvent(message=message, history=history)

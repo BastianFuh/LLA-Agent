@@ -197,8 +197,8 @@ class QuestionGenerator:
         )
 
         ctx = Context(agent)
-        await ctx.set("question_type", question_type)
-        await ctx.set("extra_parameters", extra_parameters)
+        await ctx.store.set("question_type", question_type)
+        await ctx.store.set("extra_parameters", extra_parameters)
 
         initial_message_prompt = self._get_initial_message_prompt(question_type)
 
@@ -310,55 +310,57 @@ class QuestionGenerator:
         match key:
             case question_generator.MULTI_CHOICE:
                 return {
-                    QGT.QUESTION_BASE_TEXT: await ctx.get(QGT.QUESTION_BASE_TEXT),
-                    QGT.QUESTION_TEXT: await ctx.get(QGT.QUESTION_TEXT),
-                    QGT.QUESTION_OPTIONS: await ctx.get(QGT.QUESTION_OPTIONS),
-                    QGT.QUESTION_ANSWER_INDEX: await ctx.get(QGT.QUESTION_ANSWER_INDEX),
-                    QGT.QUESTION_HINT: await ctx.get(QGT.QUESTION_HINT),
+                    QGT.QUESTION_BASE_TEXT: await ctx.store.get(QGT.QUESTION_BASE_TEXT),
+                    QGT.QUESTION_TEXT: await ctx.store.get(QGT.QUESTION_TEXT),
+                    QGT.QUESTION_OPTIONS: await ctx.store.get(QGT.QUESTION_OPTIONS),
+                    QGT.QUESTION_ANSWER_INDEX: await ctx.store.get(
+                        QGT.QUESTION_ANSWER_INDEX
+                    ),
+                    QGT.QUESTION_HINT: await ctx.store.get(QGT.QUESTION_HINT),
                 }
 
             case question_generator.FREE_TEXT:
                 return {
-                    QGT.QUESTION_BASE_TEXT: await ctx.get(QGT.QUESTION_BASE_TEXT),
-                    QGT.QUESTION_TEXT: await ctx.get(QGT.QUESTION_TEXT),
-                    QGT.QUESTION_ANSWER: await ctx.get(QGT.QUESTION_ANSWER),
-                    QGT.QUESTION_HINT: await ctx.get(QGT.QUESTION_HINT),
+                    QGT.QUESTION_BASE_TEXT: await ctx.store.get(QGT.QUESTION_BASE_TEXT),
+                    QGT.QUESTION_TEXT: await ctx.store.get(QGT.QUESTION_TEXT),
+                    QGT.QUESTION_ANSWER: await ctx.store.get(QGT.QUESTION_ANSWER),
+                    QGT.QUESTION_HINT: await ctx.store.get(QGT.QUESTION_HINT),
                 }
 
             case question_generator.TRANSLATION:
                 return {
-                    QGT.QUESTION_BASE_TEXT: await ctx.get(QGT.QUESTION_BASE_TEXT),
+                    QGT.QUESTION_BASE_TEXT: await ctx.store.get(QGT.QUESTION_BASE_TEXT),
                 }
 
             case question_generator.READING_COMPREHENSION:
                 return {
-                    QGT.READING_COMPREHENSION_TOPIC: await ctx.get(
+                    QGT.READING_COMPREHENSION_TOPIC: await ctx.store.get(
                         QGT.READING_COMPREHENSION_TOPIC
                     ),
-                    QGT.READING_COMPREHENSION_TEXT: await ctx.get(
+                    QGT.READING_COMPREHENSION_TEXT: await ctx.store.get(
                         QGT.READING_COMPREHENSION_TEXT
                     ),
-                    QGT.READING_COMPREHENSION_QUESTION: await ctx.get(
+                    QGT.READING_COMPREHENSION_QUESTION: await ctx.store.get(
                         QGT.READING_COMPREHENSION_QUESTION
                     ),
-                    QGT.AUDIO_DATA: await ctx.get(QGT.AUDIO_DATA, None),
+                    QGT.AUDIO_DATA: await ctx.store.get(QGT.AUDIO_DATA, None),
                 }
 
             case question_generator.LISTENING_COMPREHENSION:
                 return {
-                    QGT.LISTENING_COMPREHENSION_TOPIC: await ctx.get(
+                    QGT.LISTENING_COMPREHENSION_TOPIC: await ctx.store.get(
                         QGT.LISTENING_COMPREHENSION_TOPIC
                     ),
-                    QGT.LISTENING_COMPREHENSION_SPEAKERS: await ctx.get(
+                    QGT.LISTENING_COMPREHENSION_SPEAKERS: await ctx.store.get(
                         QGT.LISTENING_COMPREHENSION_SPEAKERS
                     ),
-                    QGT.LISTENING_COMPREHENSION_TEXT: await ctx.get(
+                    QGT.LISTENING_COMPREHENSION_TEXT: await ctx.store.get(
                         QGT.LISTENING_COMPREHENSION_TEXT
                     ),
-                    QGT.LISTENING_COMPREHENSION_QUESTION: await ctx.get(
+                    QGT.LISTENING_COMPREHENSION_QUESTION: await ctx.store.get(
                         QGT.LISTENING_COMPREHENSION_QUESTION
                     ),
-                    QGT.AUDIO_DATA: await ctx.get(QGT.AUDIO_DATA, None),
+                    QGT.AUDIO_DATA: await ctx.store.get(QGT.AUDIO_DATA, None),
                 }
 
             case _:

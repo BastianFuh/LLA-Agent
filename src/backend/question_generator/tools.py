@@ -55,13 +55,13 @@ async def finish(context: Context) -> str:
     Returns:
         str: Return information.
     """
-    question_type = await context.get("question_type")
+    question_type = await context.store.get("question_type")
 
     match question_type:
         case question_generator.READING_COMPREHENSION:
-            topic = await context.get(READING_COMPREHENSION_TOPIC, None)
-            text = await context.get(READING_COMPREHENSION_TEXT, None)
-            question = await context.get(READING_COMPREHENSION_QUESTION, None)
+            topic = await context.store.get(READING_COMPREHENSION_TOPIC, None)
+            text = await context.store.get(READING_COMPREHENSION_TEXT, None)
+            question = await context.store.get(READING_COMPREHENSION_QUESTION, None)
 
             if topic is None:
                 return "You have not provided a topic for the reading comprehension. Please ensure that you have provided all the necessary information."
@@ -72,7 +72,7 @@ async def finish(context: Context) -> str:
             if question is None:
                 return "You have not provided a question for the reading comprehension. Please ensure that you have provided all the necessary information."
 
-            extra_parameters = await context.get("extra_parameters")
+            extra_parameters = await context.store.get("extra_parameters")
 
             mode_switch = extra_parameters["mode_switch"]
 
@@ -107,13 +107,13 @@ async def finish(context: Context) -> str:
                 ):
                     complete_audio = np.concatenate((complete_audio, audio_np))
 
-                await context.set(AUDIO_DATA, (sr, complete_audio))
+                await context.store.set(AUDIO_DATA, (sr, complete_audio))
 
         case question_generator.LISTENING_COMPREHENSION:
-            topic = await context.get(LISTENING_COMPREHENSION_TOPIC, None)
-            speakers = await context.get(LISTENING_COMPREHENSION_SPEAKERS, None)
-            text = await context.get(LISTENING_COMPREHENSION_TEXT, None)
-            question = await context.get(LISTENING_COMPREHENSION_QUESTION, None)
+            topic = await context.store.get(LISTENING_COMPREHENSION_TOPIC, None)
+            speakers = await context.store.get(LISTENING_COMPREHENSION_SPEAKERS, None)
+            text = await context.store.get(LISTENING_COMPREHENSION_TEXT, None)
+            question = await context.store.get(LISTENING_COMPREHENSION_QUESTION, None)
 
             if topic is None:
                 return "You have not provided a topic for the listening comprehension. Please ensure that you have provided all the necessary information."
@@ -124,7 +124,7 @@ async def finish(context: Context) -> str:
             if question is None:
                 return "You have not provided a question for the listening comprehension. Please ensure that you have provided all the necessary information."
 
-            extra_parameters = await context.get("extra_parameters")
+            extra_parameters = await context.store.get("extra_parameters")
 
             mode_switch = extra_parameters["mode_switch"]
 
@@ -180,7 +180,7 @@ async def finish(context: Context) -> str:
                 ):
                     complete_audio = np.concatenate((complete_audio, audio_np))
 
-                await context.set(AUDIO_DATA, (sr, complete_audio))
+                await context.store.set(AUDIO_DATA, (sr, complete_audio))
 
     return "The process was finished."
 
@@ -212,9 +212,9 @@ async def create_base_text(
     # Select one option
     option = potential_texts[random.randint(0, len(potential_texts) - 1)]
 
-    await context.set(QUESTION_BASE_TEXT, option[0])
+    await context.store.set(QUESTION_BASE_TEXT, option[0])
 
-    question_type = await context.get("question_type")
+    question_type = await context.store.get("question_type")
 
     match question_type:
         case question_generator.TRANSLATION:
@@ -245,9 +245,9 @@ async def create_question_with_placholder(
     if not question_text.__contains__("___"):
         return 'Your question text was malformed and does not contain the placeholder for the answer which is: "___". Please correct this.'
 
-    await context.set(QUESTION_TEXT, question_text)
-    # await context.set(QUESTION_OPTIONS, options)
-    await context.set(QUESTION_ANSWER, answer)
+    await context.store.set(QUESTION_TEXT, question_text)
+    # await context.store.set(QUESTION_OPTIONS, options)
+    await context.store.set(QUESTION_ANSWER, answer)
 
     return "You MUST now generate a hint for the answer. The hint MUST be in english."
 
@@ -271,9 +271,9 @@ async def create_question_hint(context: Context, hint: str) -> str:
         str: Next instruction
     """
 
-    await context.set(QUESTION_HINT, hint)
+    await context.store.set(QUESTION_HINT, hint)
 
-    question_type = await context.get("question_type")
+    question_type = await context.store.get("question_type")
 
     match question_type:
         case question_generator.MULTI_CHOICE:
@@ -302,14 +302,14 @@ async def create_multiple_choice_question_incorrect_options(
         str: Next instruction
     """
 
-    answer = await context.get(QUESTION_ANSWER)
+    answer = await context.store.get(QUESTION_ANSWER)
 
     additional_options.insert(random.randint(0, len(additional_options)), answer)
 
     answer_index = additional_options.index(answer)
 
-    await context.set(QUESTION_OPTIONS, additional_options)
-    await context.set(QUESTION_ANSWER_INDEX, answer_index)
+    await context.store.set(QUESTION_OPTIONS, additional_options)
+    await context.store.set(QUESTION_ANSWER_INDEX, answer_index)
 
     return "You have done everything you can now finish up."
 
@@ -334,7 +334,7 @@ async def create_reading_comprehension_topic(
 
     topic = topics[random.randint(0, len(topics) - 1)]
 
-    await context.set(READING_COMPREHENSION_TOPIC, topic)
+    await context.store.set(READING_COMPREHENSION_TOPIC, topic)
 
     return _CREATE_COMPREHENSION_BASE_TEXT_INSTRUCTION.format(text=topic)
 
@@ -353,7 +353,7 @@ async def create_reading_comprehension_text(context: Context, text: str) -> str:
         str: Tool response
     """
 
-    await context.set(READING_COMPREHENSION_TEXT, text)
+    await context.store.set(READING_COMPREHENSION_TEXT, text)
 
     return "Now generate a question for the given text."
 
@@ -369,7 +369,7 @@ async def create_reading_comprehension_question(context: Context, question: str)
         str: Tool response
     """
 
-    await context.set(READING_COMPREHENSION_QUESTION, question)
+    await context.store.set(READING_COMPREHENSION_QUESTION, question)
 
     return "You have done everything you can now finish up."
 
@@ -394,7 +394,7 @@ async def create_listening_comprehension_topic(
 
     topic = topics[random.randint(0, len(topics) - 1)]
 
-    await context.set(LISTENING_COMPREHENSION_TOPIC, topic)
+    await context.store.set(LISTENING_COMPREHENSION_TOPIC, topic)
 
     return _CREATE_COMPREHENSION_BASE_TEXT_INSTRUCTION.format(text=topic)
 
@@ -414,7 +414,7 @@ async def create_listening_comprehension_speakers(
         str: Tool response
     """
 
-    await context.set(LISTENING_COMPREHENSION_SPEAKERS, speakers)
+    await context.store.set(LISTENING_COMPREHENSION_SPEAKERS, speakers)
 
     return f"In the next step you will generate the text for the comprehension problem. Please use the speakers you just provided. Speaker 1 is {speakers[0]} and speaker 2 is {speakers[1]}."
 
@@ -448,7 +448,7 @@ async def create_listening_comprehension_text(
         str: Tool response
     """
 
-    await context.set(LISTENING_COMPREHENSION_TEXT, text)
+    await context.store.set(LISTENING_COMPREHENSION_TEXT, text)
 
     return "Now generate a question for the given text."
 
@@ -466,6 +466,6 @@ async def create_listening_comprehension_question(
         str: Tool response
     """
 
-    await context.set(LISTENING_COMPREHENSION_QUESTION, question)
+    await context.store.set(LISTENING_COMPREHENSION_QUESTION, question)
 
     return "You have done everything you can now finish up."

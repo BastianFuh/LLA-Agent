@@ -12,3 +12,7 @@ voice_references/*.json
 *.pem
 
 settings.json
+
+.venv*/
+.vscode/
+.gradio/

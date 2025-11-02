@@ -75,7 +75,7 @@ class ChatBotWorkfLow(Workflow):
 
             return LLMStartEvent(message=ev.message, history=ev.history)
 
-        events = ctx.collect_events(ev, [LLMFinishedEvent, AudioFinishedEvent])
+        events = ctx.store.collect_events(ev, [LLMFinishedEvent, AudioFinishedEvent])
 
         if events is None:
             return None
@@ -88,7 +88,7 @@ class ChatBotWorkfLow(Workflow):
     async def llm_step(self, ctx: Context, ev: LLMStartEvent) -> LLMFinishedEvent:
         logging.info("Started llm request")
 
-        model = await ctx.get(const.MODEL)
+        model = await ctx.store.get(const.MODEL)
 
         model_information = get_llm_models()[model]
 
@@ -121,7 +121,7 @@ class ChatBotWorkfLow(Workflow):
 
         agent_ctx = Context(agent)
 
-        is_stream = await ctx.get(const.IS_STREAM, default=False)
+        is_stream = await ctx.store.get(const.IS_STREAM, default=False)
 
         # TODO: Check if there is a way to stream the ouput of an agent without the thought process
         if is_stream:
@@ -149,7 +149,7 @@ class ChatBotWorkfLow(Workflow):
     async def audio_prepare(
         self, ctx: Context, ev: LLMFinishedEvent
     ) -> AudioStartEvent | AudioFinishedEvent:
-        audio_output = await ctx.get(const.AUDIO_OUTPUT, default=False)
+        audio_output = await ctx.store.get(const.AUDIO_OUTPUT, default=False)
 
         if not audio_output:
             return AudioFinishedEvent()

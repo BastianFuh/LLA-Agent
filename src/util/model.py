@@ -86,9 +86,13 @@ def init_models():
     """
     global _active_llm_models, _active_embedding_models
 
-    for model in ollama.list().models:
-        _ollama_add_llm_model(_active_llm_models, model["model"])
-        _ollama_add_embedding_model(_active_embedding_models, model["model"])
+    try:
+        for model in ollama.list().models:
+            _ollama_add_llm_model(_active_llm_models, model["model"])
+            _ollama_add_embedding_model(_active_embedding_models, model["model"])
+    except ConnectionError as e:
+        logger.error(f"Failed to initialize Ollama models: {e}")
+        logger.error("Skipping Ollama model initialization.")
 
 
 def get_llm_models() -> const.OptionType:
