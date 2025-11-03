@@ -678,6 +678,9 @@ async def get_audio(tts_provider: str, language: str, *args: tuple[str]):
 
     for text in args:
         for sr, audio_np in generate_audio(tts_provider, text, language):
+            logging.info(
+                f"Generated audio chunk with shape {audio_np.shape} and sample rate {sr}"
+            )
             complete_audio = np.concatenate((complete_audio, audio_np))
 
         complete_audio = np.concatenate((complete_audio, np.zeros(2 * sr)))

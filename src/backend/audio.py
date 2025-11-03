@@ -2,6 +2,7 @@ import json
 import logging
 import random
 import re
+from math import log
 from pathlib import Path
 from typing import Generator, Tuple
 
@@ -146,7 +147,7 @@ def get_random_voice_id_for_provider(
     if tts_provider == const.TTS_OPENAI:
         return _get_id_with_exluded_ids(len(OPENAI_VOICES), exclude_ids)
 
-    if tts_provider == const.TTS_FISH_AUDIO:
+    if tts_provider == const.TTS_FISH_AUDIO or tts_provider == const.TTS_CHATTERBOX:
         return _get_id_with_exluded_ids(
             len(get_fish_audio_voice_samples(language)), exclude_ids
         )
@@ -228,6 +229,81 @@ def _generate_audio_openai(
     yield (24000, return_audio)
 
 
+def _generate_audio_chatterbox(
+    text: str, language: str, voice_id: int = -1
+) -> Generator[Tuple[int, np.ndarray], None, None]:
+    import io
+    import wave
+
+    import soundfile as sf
+    import torchaudio as ta
+    from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+
+    device = "cuda"
+
+    voices = get_fish_audio_voice_samples(language)
+
+    wave_file = io.BytesIO()
+
+    if voice_id < 0:
+        voice_id = random.randint(0, len(voices) - 1)
+
+    if len(voices) != 0:
+        # Select a random voice from the list
+        voice = voices[voice_id]
+
+        audio_prompt_path = voice["audio_file"]
+
+        multilingual_model = ChatterboxMultilingualTTS.from_pretrained(device=device)
+
+        logger.info(
+            f"Generating audio with Chatterbox using voice sample {audio_prompt_path} for language {language} ({get_language_code(language)})"
+        )
+
+        generated_wav = multilingual_model.generate(
+            text,
+            language_id=get_language_code(language),
+            audio_prompt_path=audio_prompt_path,
+        )
+
+    yield (multilingual_model.sr, generated_wav.numpy()[0])
+
+    #    ta.save(
+    #        "temp.wav",
+    #        generated_wav,
+    #        multilingual_model.sr,
+    #    )
+
+
+#
+#    ta.save(
+#        wave_file,
+#        generated_wav,
+#        multilingual_model.sr,
+#        format="wav",
+#        encoding="PCM_S",
+#    )
+#
+# wave_file.seek(0)
+#
+# with wave.open(wave_file, "rb") as wav_file:
+#    num_channels = wav_file.getnchannels()
+#    framerate = wav_file.getframerate()
+#    num_frames = wav_file.getnframes()
+#
+#    audio_data = wav_file.readframes(num_frames)
+#
+#    audio_np = np.frombuffer(audio_data, dtype=np.int16)
+#
+#    logger.info(f"Generated audio with {num_channels} channels at {framerate} Hz")
+#
+#    # If stereo (2 channels), reshape to [num_frames, 2] array
+#    if num_channels == 2:
+#        audio_np = audio_np.reshape(-1, 2)
+#
+# yield (framerate, audio_np)
+
+
 def _generate_audio_fish_audio(
     text: str, language: str, voice_id: int = -1
 ) -> Generator[Tuple[int, np.ndarray], None, None]:
@@ -289,6 +365,10 @@ def _generate_audio_fish_audio(
 def generate_audio(
     tts_provider: str, text: str, language: str, voice_id: int = -1
 ) -> Generator[Tuple[int, np.ndarray], None, None]:
+    logger.info(
+        f"Generating audio with {tts_provider} for language {language} and voice_id {voice_id}"
+    )
+
     if tts_provider == const.TTS_KOKORO:
         for sr, audio_np in _generate_audio_kokoro(text, language, voice_id=voice_id):
             yield (sr, audio_np)
@@ -303,6 +383,12 @@ def generate_audio(
 
     if tts_provider == const.TTS_FISH_AUDIO:
         for sr, audio_np in _generate_audio_fish_audio(
+            text, language, voice_id=voice_id
+        ):
+            yield (sr, audio_np)
+
+    if tts_provider == const.TTS_CHATTERBOX:
+        for sr, audio_np in _generate_audio_chatterbox(
             text, language, voice_id=voice_id
         ):
             yield (sr, audio_np)

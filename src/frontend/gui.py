@@ -7,6 +7,7 @@ from ollama import show
 import frontend.functions as F
 from util.const import (
     OPTION_SEARCH_ENGINE,
+    TTS_CHATTERBOX,
     TTS_ELEVENLABS,
     TTS_FISH_AUDIO,
     TTS_KOKORO,
@@ -85,7 +86,13 @@ def create_gui() -> gr.Blocks:
 
             tts_provider = create_dropdown_input(
                 browser_state,
-                [TTS_KOKORO, TTS_ELEVENLABS, TTS_OPENAI, TTS_FISH_AUDIO],
+                [
+                    TTS_KOKORO,
+                    TTS_ELEVENLABS,
+                    TTS_OPENAI,
+                    TTS_FISH_AUDIO,
+                    TTS_CHATTERBOX,
+                ],
                 "tts_provider",
                 "TTS Provider",
             )
