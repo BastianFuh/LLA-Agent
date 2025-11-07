@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class AudioTranscriber:
+    """Transcriber for the audio input which enables the speech to text."""
+
     end_of_sentence_detection_pause = 0.45
     unknown_sentence_detection_pause = 0.7
     mid_sentence_detection_pause = 2.0
