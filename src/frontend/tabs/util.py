@@ -1,6 +1,6 @@
 import gradio as gr
 
-import frontend.functions as F
+import frontend.tabs.shared as F
 from util.transcription import AudioTranscriber
 
 

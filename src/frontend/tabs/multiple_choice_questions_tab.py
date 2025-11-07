@@ -1,6 +1,7 @@
 import gradio as gr
 
-import frontend.functions as F
+import frontend.tabs.shared as F
+from backend.question_generator import tools as QGT
 from frontend.tabs.util import create_chatbot
 
 
@@ -62,7 +63,7 @@ def create_multiple_choice_questions_tab(
                     )
 
             question_create_button.click(
-                F.create_multiple_choice_questions,
+                create_multiple_choice_questions,
                 [
                     create_state,
                     model,
@@ -75,7 +76,7 @@ def create_multiple_choice_questions_tab(
             )
 
             question_submit_button.click(
-                F.verify_multiple_choice_question,
+                verify_multiple_choice_question,
                 [create_state] + question_options,
                 question_options,
             )
@@ -94,3 +95,61 @@ def create_multiple_choice_questions_tab(
             ],
             fill_height=True,
         )
+
+
+async def create_multiple_choice_questions(
+    state: gr.State,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+):
+    F.verify_input(language, language_proficiency, difficulty)
+
+    state, question_generator = F.get_question_generator(state, model)
+
+    async for question_data in question_generator.generate_multiple_choice(
+        language, language_proficiency, difficulty, additional_information
+    ):
+        state[QGT.QUESTION_ANSWER_INDEX] = question_data[QGT.QUESTION_ANSWER_INDEX]
+
+        options = question_data[QGT.QUESTION_OPTIONS]
+
+        question_text = f"{question_data[QGT.QUESTION_TEXT]}"
+
+        yield (
+            state,
+            gr.Textbox(value=question_text, info=question_data[QGT.QUESTION_HINT]),
+            gr.Checkbox(label=options[0], value=False, info=""),
+            gr.Checkbox(label=options[1], value=False, info=""),
+            gr.Checkbox(label=options[2], value=False, info=""),
+            gr.Checkbox(label=options[3], value=False, info=""),
+        )
+
+    yield gr.skip()
+
+
+async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
+    options = [c1, c2, c3, c4]
+
+    if not state.__contains__(QGT.QUESTION_ANSWER_INDEX):
+        gr.Info("Please generate a question first.")
+        return gr.skip()
+
+    correct_answer = state[QGT.QUESTION_ANSWER_INDEX]
+
+    try:
+        selected_answer = options.index(True)
+    except ValueError:
+        gr.Info("Please select a option")
+        return gr.skip()
+
+    updates = len(options) * [gr.Checkbox(info="")]
+
+    if options[correct_answer]:
+        updates[correct_answer] = gr.Checkbox(info="Correct Answer")
+    else:
+        updates[selected_answer] = gr.Checkbox(info="Wrong Answer")
+
+    return updates

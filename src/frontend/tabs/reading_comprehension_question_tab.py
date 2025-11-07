@@ -1,12 +1,18 @@
+import logging
+from textwrap import TextWrapper
+
 import gradio as gr
 from gradio_toggle import Toggle
 
-import frontend.functions as F
+import frontend.tabs.shared as F
+from backend.question_generator import tools as QGT
 from frontend.tabs.util import (
     create_audio_output,
     create_chatbot,
     create_textbox_with_audio_input,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def create_reading_comprehension_question_tab(
@@ -85,7 +91,7 @@ def create_reading_comprehension_question_tab(
         )
 
         question_create_button.click(fn=F.clear, outputs=[chatbot]).then(
-            F.create_reading_comprehension_question,
+            create_reading_comprehension_question,
             [
                 create_state,
                 model,
@@ -100,7 +106,7 @@ def create_reading_comprehension_question_tab(
         )
 
         show_text_button.click(
-            F.show_comprehension_text,
+            show_comprehension_text,
             [create_state, topic, text, question],
             [create_state, topic, text, question],
         )
@@ -137,3 +143,71 @@ def create_reading_comprehension_question_tab(
             ],
             outputs=[chatbot],
         )
+
+
+async def create_reading_comprehension_question(
+    state: dict,
+    model: str,
+    language: str,
+    language_proficiency: str,
+    difficulty: str,
+    additional_information: str,
+    mode_switch: bool,
+    tts_provider: str,
+):
+    F.verify_input(language, language_proficiency, difficulty)
+
+    state, question_generator = F.get_question_generator(state, model)
+
+    yield (
+        gr.skip(),
+        gr.Textbox(value=""),
+        gr.TextArea(value=""),
+        gr.Textbox(value=""),
+        gr.Textbox(value="", info=""),
+        gr.skip(),
+    )
+
+    async for question_data in question_generator.generate_reading_comprehension(
+        language,
+        language_proficiency,
+        difficulty,
+        additional_information,
+        mode_switch,
+        tts_provider,
+    ):
+        topic = f"{question_data[QGT.READING_COMPREHENSION_TOPIC]}"
+        text = f"{question_data[QGT.READING_COMPREHENSION_TEXT]}"
+        question = f"{question_data[QGT.READING_COMPREHENSION_QUESTION]}"
+
+        wrapped_text = TextWrapper(
+            width=37, expand_tabs=False, replace_whitespace=False
+        ).fill(text)
+
+        if mode_switch:
+            yield (
+                state,
+                gr.Textbox(value=topic, visible=False),
+                gr.TextArea(value=wrapped_text, visible=False),
+                gr.Textbox(value=question, visible=False),
+                gr.Textbox(value="", info=""),
+                question_data[QGT.AUDIO_DATA],
+            )
+        else:
+            yield (
+                state,
+                gr.Textbox(value=topic),
+                gr.TextArea(value=wrapped_text),
+                gr.Textbox(value=question),
+                gr.Textbox(value="", info=""),
+                gr.skip(),
+            )
+
+
+async def show_comprehension_text(state, topic: str, text: str, question: str):
+    yield (
+        state,
+        gr.Textbox(value=topic, visible=True),
+        gr.TextArea(value=text, visible=True),
+        gr.Textbox(value=question, visible=True),
+    )
