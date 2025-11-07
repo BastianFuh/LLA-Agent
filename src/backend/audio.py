@@ -1,8 +1,6 @@
 import json
 import logging
 import random
-import re
-from math import log
 from pathlib import Path
 from typing import Generator, Tuple
 
@@ -232,18 +230,11 @@ def _generate_audio_openai(
 def _generate_audio_chatterbox(
     text: str, language: str, voice_id: int = -1
 ) -> Generator[Tuple[int, np.ndarray], None, None]:
-    import io
-    import wave
-
-    import soundfile as sf
-    import torchaudio as ta
     from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 
     device = "cuda"
 
     voices = get_fish_audio_voice_samples(language)
-
-    wave_file = io.BytesIO()
 
     if voice_id < 0:
         voice_id = random.randint(0, len(voices) - 1)
@@ -267,41 +258,6 @@ def _generate_audio_chatterbox(
         )
 
     yield (multilingual_model.sr, generated_wav.numpy()[0])
-
-    #    ta.save(
-    #        "temp.wav",
-    #        generated_wav,
-    #        multilingual_model.sr,
-    #    )
-
-
-#
-#    ta.save(
-#        wave_file,
-#        generated_wav,
-#        multilingual_model.sr,
-#        format="wav",
-#        encoding="PCM_S",
-#    )
-#
-# wave_file.seek(0)
-#
-# with wave.open(wave_file, "rb") as wav_file:
-#    num_channels = wav_file.getnchannels()
-#    framerate = wav_file.getframerate()
-#    num_frames = wav_file.getnframes()
-#
-#    audio_data = wav_file.readframes(num_frames)
-#
-#    audio_np = np.frombuffer(audio_data, dtype=np.int16)
-#
-#    logger.info(f"Generated audio with {num_channels} channels at {framerate} Hz")
-#
-#    # If stereo (2 channels), reshape to [num_frames, 2] array
-#    if num_channels == 2:
-#        audio_np = audio_np.reshape(-1, 2)
-#
-# yield (framerate, audio_np)
 
 
 def _generate_audio_fish_audio(
