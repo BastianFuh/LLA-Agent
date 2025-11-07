@@ -1,5 +1,4 @@
 import logging
-from ast import mod
 from textwrap import TextWrapper
 
 import gradio as gr
@@ -7,7 +6,7 @@ import numpy as np
 from llama_index.core.workflow import Context
 
 import prompts
-from backend.audio import generate_audio, get_random_voice_id_for_provider
+from backend.audio import generate_audio
 from backend.chatbot.chatbot_workflow import ChatBotWorkfLow
 from backend.events import AudioStreamEvent, ChatBotStartEvent, LLMProgressEvent
 from backend.question_generator import tools as QGT
