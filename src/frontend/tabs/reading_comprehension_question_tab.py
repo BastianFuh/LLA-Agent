@@ -6,6 +6,7 @@ from gradio_toggle import Toggle
 
 import frontend.tabs.shared as F
 from backend.question_generator import tools as QGT
+from frontend.tabs.messages.message_manager import MessageManager
 from frontend.tabs.util import (
     create_audio_output,
     create_chatbot,
@@ -36,14 +37,23 @@ def create_reading_comprehension_question_tab(
             # Topic and Text
             with gr.Column():
                 with gr.Group():
-                    mode_switch = Toggle(label="Listening Comprehension", value=False)
-                    show_text_button = gr.Button("Show Text")
+                    mode_switch = Toggle(
+                        label=MessageManager()
+                        .getMessages()
+                        .label_listening_comprehension_switch(),
+                        value=False,
+                    )
+                    show_text_button = gr.Button(
+                        MessageManager().getMessages().button_show_text()
+                    )
                 with gr.Group():
                     topic = gr.Textbox(
                         "",
-                        label="Topic",
+                        label=MessageManager().getMessages().label_topic(),
                         container=False,
-                        placeholder="The topic of the text",
+                        placeholder=MessageManager()
+                        .getMessages()
+                        .placeholder_comprehension_topic(),
                         lines=1,
                         interactive=False,
                         show_label=False,
@@ -52,29 +62,36 @@ def create_reading_comprehension_question_tab(
                     text = gr.TextArea(
                         show_label=False,
                         container=False,
-                        placeholder="The text of the reading comprehension",
+                        placeholder=MessageManager()
+                        .getMessages()
+                        .placeholder_comprehension_text(),
                         interactive=False,
                         lines=11,
                         autoscroll=True,
                     )
 
                     question_create_button = gr.Button(
-                        "Next", elem_classes="next-button"
+                        MessageManager().getMessages().button_generate_question(),
+                        elem_classes="next-button",
                     )
 
             # Question and Answer
             with gr.Column():
                 with gr.Group():
                     question = gr.Textbox(
-                        label="Question",
-                        placeholder="Your question will be generated here",
+                        label=MessageManager().getMessages().label_question(),
+                        placeholder=MessageManager()
+                        .getMessages()
+                        .placeholder_comprehension_text(),
                         interactive=False,
                         show_copy_button=True,
                         lines=2,
                     )
                     answer = create_textbox_with_audio_input(
-                        label="Answer",
-                        placeholder="Type your answer...",
+                        label=MessageManager().getMessages().label_answer(),
+                        placeholder=MessageManager()
+                        .getMessages()
+                        .placeholder_answer_field(),
                         lines=3,
                         submit_btn=True,
                     )
@@ -84,10 +101,12 @@ def create_reading_comprehension_question_tab(
                 )
 
         chatbot = create_chatbot(
-            "<strong>The answers will be evaluted here</strong><br>You can also ask Me Anything"
+            MessageManager().getMessages().placeholder_chatbot_evaluation()
         )
         chatbot_input = gr.Textbox(
-            submit_btn=True, placeholder="Type a message...", show_label=False
+            submit_btn=True,
+            placeholder=MessageManager().getMessages().placeholder_chatbot_input(),
+            show_label=False,
         )
 
         question_create_button.click(fn=F.clear, outputs=[chatbot]).then(

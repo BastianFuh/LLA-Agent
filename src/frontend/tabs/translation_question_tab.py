@@ -5,6 +5,7 @@ import gradio as gr
 import frontend.tabs.shared as F
 import prompts
 from backend.question_generator import tools as QGT
+from frontend.tabs.messages.message_manager import MessageManager
 from frontend.tabs.util import (
     create_audio_output,
     create_chatbot,
@@ -41,15 +42,16 @@ def create_translation_question_tab(
                 show_copy_button=True,
             )
 
+            question_create_button = gr.Button(
+                MessageManager().getMessages().button_generate_question(),
+                elem_classes="next-button",
+                scale=1,
+            )
+
             answer_box = create_textbox_with_audio_input(
                 show_label=False,
                 submit_btn=True,
-                placeholder="Type your answer...",
-            )
-            # question_submit_button = answer_box.submit_btn
-
-            question_create_button = gr.Button(
-                "Next", elem_classes="next-button", scale=1
+                placeholder=MessageManager().getMessages().placeholder_answer_field(),
             )
 
         create_audio_output(tts_provider, language, question_text)
@@ -59,7 +61,9 @@ def create_translation_question_tab(
         )
 
         chatbot_input = gr.Textbox(
-            submit_btn=True, placeholder="Type a message...", show_label=False
+            submit_btn=True,
+            placeholder=MessageManager().getMessages().placeholder_chatbot_input(),
+            show_label=False,
         )
 
         question_create_button.click(fn=F.clear, outputs=[chatbot]).then(

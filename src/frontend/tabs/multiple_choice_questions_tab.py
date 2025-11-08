@@ -2,6 +2,7 @@ import gradio as gr
 
 import frontend.tabs.shared as F
 from backend.question_generator import tools as QGT
+from frontend.tabs.messages.message_manager import MessageManager
 from frontend.tabs.util import create_chatbot
 
 
@@ -27,20 +28,28 @@ def create_multiple_choice_questions_tab(
             with gr.Group():
                 question_text = gr.TextArea(
                     "",
-                    label="Question",
+                    label=MessageManager().getMessages().label_question(),
                     lines=1,
                     interactive=False,
-                    placeholder="Your question will be generated here",
+                    placeholder=MessageManager().getMessages().question_placeholder(),
                 )
 
                 # Multiple checkboxes are used here instead of radio, or groupcheckbox because they should be in a
                 # vertival row and this does not seem to be possible with the alternative options.
 
                 question_options = [
-                    gr.Checkbox(label="Answer 1"),
-                    gr.Checkbox(label="Answer 2"),
-                    gr.Checkbox(label="Answer 3"),
-                    gr.Checkbox(label="Answer 4"),
+                    gr.Checkbox(
+                        label=MessageManager().getMessages().label_answer_numbered(1)
+                    ),
+                    gr.Checkbox(
+                        label=MessageManager().getMessages().label_answer_numbered(2)
+                    ),
+                    gr.Checkbox(
+                        label=MessageManager().getMessages().label_answer_numbered(3)
+                    ),
+                    gr.Checkbox(
+                        label=MessageManager().getMessages().label_answer_numbered(4)
+                    ),
                 ]
 
                 for checkbox in question_options:
@@ -56,10 +65,14 @@ def create_multiple_choice_questions_tab(
 
                 with gr.Row():
                     question_create_button = gr.Button(
-                        "Next", elem_classes="next-button", scale=1
+                        MessageManager().getMessages().button_generate_question(),
+                        elem_classes="next-button",
+                        scale=1,
                     )
                     question_submit_button = gr.Button(
-                        "Submit", elem_classes="submit-custom-button", scale=2
+                        MessageManager().getMessages().button_validate_answer(),
+                        elem_classes="submit-custom-button",
+                        scale=1,
                     )
 
             question_create_button.click(
@@ -134,7 +147,7 @@ async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
     options = [c1, c2, c3, c4]
 
     if not state.__contains__(QGT.QUESTION_ANSWER_INDEX):
-        gr.Info("Please generate a question first.")
+        gr.Info(MessageManager().getMessages().info_generate_question_first())
         return gr.skip()
 
     correct_answer = state[QGT.QUESTION_ANSWER_INDEX]
@@ -142,14 +155,18 @@ async def verify_multiple_choice_question(state: dict, c1, c2, c3, c4):
     try:
         selected_answer = options.index(True)
     except ValueError:
-        gr.Info("Please select a option")
+        gr.Info(MessageManager().getMessages().info_select_option())
         return gr.skip()
 
     updates = len(options) * [gr.Checkbox(info="")]
 
     if options[correct_answer]:
-        updates[correct_answer] = gr.Checkbox(info="Correct Answer")
+        updates[correct_answer] = gr.Checkbox(
+            info=MessageManager().getMessages().info_correct_answer()
+        )
     else:
-        updates[selected_answer] = gr.Checkbox(info="Wrong Answer")
+        updates[selected_answer] = gr.Checkbox(
+            info=MessageManager().getMessages().info_incorrect_answer()
+        )
 
     return updates

@@ -10,6 +10,7 @@ from frontend.tabs import (
     create_reading_comprehension_question_tab,
     create_translation_question_tab,
 )
+from frontend.tabs.messages.message_manager import MessageManager
 from frontend.tabs.util import (
     create_checkbox_input,
     create_dropdown_input,
@@ -46,38 +47,57 @@ def create_gui() -> gr.Blocks:
 
     create_state = gr.State({})
 
-    with gr.Sidebar(label="Settings", position="right"):
+    with gr.Sidebar(
+        label=MessageManager().getMessages().label_settings(), position="right"
+    ):
         with gr.Group():
-            language = create_text_input(browser_state, False, "language", "Language")
+            language = create_text_input(
+                browser_state,
+                False,
+                "language",
+                MessageManager().getMessages().label_language(),
+            )
             language_proficiency = create_text_input(
-                browser_state, False, "language_proficiency", "Language Proficiency"
+                browser_state,
+                False,
+                "language_proficiency",
+                MessageManager().getMessages().label_language_proficiency(),
             )
             difficulty = create_text_input(
-                browser_state, False, "difficulty", "Difficulty"
+                browser_state,
+                False,
+                "difficulty",
+                MessageManager().getMessages().label_difficulty(),
             )
             additional_information = create_text_input(
-                browser_state, True, "additional_information", "Additional Information"
+                browser_state,
+                True,
+                "additional_information",
+                MessageManager().getMessages().label_additional_information(),
             )
 
     with gr.Tabs(selected=1):
-        with gr.Tab("Options", id=0, scale=1):
+        with gr.Tab(MessageManager().getMessages().tab_label_options(), id=0, scale=1):
             options = list(get_llm_models().keys())
             model = create_dropdown_input(
-                browser_state, options, "option_model", "Chatbot Model"
+                browser_state,
+                options,
+                "option_model",
+                MessageManager().getMessages().label_model(),
             )
 
             embedding_model = create_dropdown_input(
                 browser_state,
                 list(get_embedding_models().keys()),
                 "option_embedding_model",
-                "Embedding Model",
+                MessageManager().getMessages().label_embedding_model(),
             )
 
             search_engine = create_dropdown_input(
                 browser_state,
                 OPTION_SEARCH_ENGINE,
                 "option_search_engine",
-                "Search Engine",
+                MessageManager().getMessages().label_search_engine(),
             )
 
             tts_provider = create_dropdown_input(
@@ -90,7 +110,7 @@ def create_gui() -> gr.Blocks:
                     TTS_CHATTERBOX,
                 ],
                 "tts_provider",
-                "TTS Provider",
+                MessageManager().getMessages().label_tts_provider(),
             )
 
             is_stream = create_checkbox_input(
@@ -105,7 +125,11 @@ def create_gui() -> gr.Blocks:
                 "Enable audio output for the chatbot.",
             )
 
-        with gr.Tab("Conversation Exercise", id=1, scale=1):
+        with gr.Tab(
+            MessageManager().getMessages().tab_label_conversation_exercise(),
+            id=1,
+            scale=1,
+        ):
             create_conversation_exercise_tab(
                 browser_state,
                 is_stream,
@@ -119,7 +143,11 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Multiple Choice Fill-in-the-blank", id=2, scale=1):
+        with gr.Tab(
+            MessageManager().getMessages().tab_label_multiple_choice_question(),
+            id=2,
+            scale=1,
+        ):
             create_multiple_choice_questions_tab(
                 browser_state,
                 create_state,
@@ -134,7 +162,11 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Constructed response fill-in-the-blank", id=3, scale=1):
+        with gr.Tab(
+            MessageManager().getMessages().tab_label_fill_in_blank_question(),
+            id=3,
+            scale=1,
+        ):
             create_free_text_questions_tab(
                 browser_state,
                 create_state,
@@ -149,7 +181,11 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Translation", id=4, scale=1):
+        with gr.Tab(
+            MessageManager().getMessages().tab_label_translation_question(),
+            id=4,
+            scale=1,
+        ):
             create_translation_question_tab(
                 browser_state,
                 create_state,
@@ -165,7 +201,11 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Comprehension - Monologue", id=5, scale=1):
+        with gr.Tab(
+            MessageManager().getMessages().tab_label_comprehension_monologue_question(),
+            id=5,
+            scale=1,
+        ):
             create_reading_comprehension_question_tab(
                 browser_state,
                 create_state,
@@ -181,7 +221,11 @@ def create_gui() -> gr.Blocks:
                 additional_information,
             )
 
-        with gr.Tab("Comprehension - Dialogue", id=6, scale=1):
+        with gr.Tab(
+            MessageManager().getMessages().tab_label_comprehension_dialogue_question(),
+            id=6,
+            scale=1,
+        ):
             create_listening_comprehension_question_tab(
                 browser_state,
                 create_state,

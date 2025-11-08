@@ -2,6 +2,7 @@ import gradio as gr
 
 import frontend.tabs.shared as F
 from backend.question_generator import tools as QGT
+from frontend.tabs.messages.message_manager import MessageManager
 from frontend.tabs.util import create_chatbot
 
 
@@ -22,26 +23,37 @@ def create_free_text_questions_tab(
         scale=1,
     ):
         with gr.Group():
+            ###
+            # Layout
+            ###
             question_text = gr.TextArea(
-                label="Question",
-                placeholder="Your question will be generated here",
+                label=MessageManager().getMessages().label_question(),
+                placeholder=MessageManager().getMessages().question_placeholder(),
                 lines=1,
                 interactive=False,
             )
 
+            question_create_button = gr.Button(
+                MessageManager().getMessages().button_generate_question(),
+                elem_classes="next-button",
+                scale=1,
+            )
+
             answer_box = gr.Textbox(
                 show_label=False,
-                placeholder="Type your answer...",
+                placeholder=MessageManager().getMessages().placeholder_answer_field(),
                 submit_btn=True,
             )
 
-            with gr.Row():
-                question_create_button = gr.Button(
-                    "Next", elem_classes="next-button", scale=1
-                )
-                question_show_answer = gr.Button(
-                    "Show Answer", elem_classes="show-answer-button", scale=1
-                )
+            # question_show_answer = gr.Button(
+            #    MessageManager().getMessages().button_validate_answer(),
+            #    elem_classes="show-answer-button",
+            #    scale=1,
+            # )
+
+            ###
+            # Functionality
+            ###
 
             question_create_button.click(
                 create_free_text_question,
@@ -63,9 +75,9 @@ def create_free_text_questions_tab(
                 outputs=[answer_box],
             )
 
-            question_show_answer.click(
-                show_free_text_answer, [create_state], [answer_box]
-            )
+            # question_show_answer.click(
+            #     show_free_text_answer, [create_state], [answer_box]
+            # )
 
         chatbot = create_chatbot()
         gr.ChatInterface(
@@ -85,7 +97,7 @@ def create_free_text_questions_tab(
 
 async def show_free_text_answer(state: dict):
     if not state.__contains__(QGT.QUESTION_ANSWER):
-        gr.Info("Please generate a question first.")
+        gr.Info(MessageManager().getMessages().info_generate_question_first())
         return gr.skip()
 
     return gr.Textbox(info=state[QGT.QUESTION_ANSWER])
@@ -93,15 +105,19 @@ async def show_free_text_answer(state: dict):
 
 async def verify_free_text_question(state: dict, answer: str):
     if not state.__contains__(QGT.QUESTION_ANSWER):
-        gr.Info("Please generate a question first.")
+        gr.Info(MessageManager().getMessages().info_generate_question_first())
         return gr.skip()
 
     correct_answer = state[QGT.QUESTION_ANSWER]
 
     if correct_answer == answer:
-        update_answer_field = gr.Textbox(info="Correct Answer")
+        update_answer_field = gr.Textbox(
+            info=MessageManager().getMessages().info_correct_answer()
+        )
     else:
-        update_answer_field = gr.Textbox(info="Wrong Answer")
+        update_answer_field = gr.Textbox(
+            info=MessageManager().getMessages().info_incorrect_answer()
+        )
 
     return update_answer_field
 

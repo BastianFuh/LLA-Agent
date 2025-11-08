@@ -2,6 +2,7 @@ import gradio as gr
 
 import frontend.tabs.shared as F
 import prompts
+from frontend.tabs.messages.message_manager import MessageManager
 
 
 def create_conversation_exercise_tab(
@@ -19,8 +20,9 @@ def create_conversation_exercise_tab(
     chatbot = gr.Chatbot(
         type="messages",
         scale=1,
-        placeholder="<strong>Your Personal Language Learning Assistant</strong><br>Ask Me Anything",
+        placeholder=MessageManager().getMessages().placeholder_chatbot(),
     )
+
     gr.ChatInterface(
         fn=conversation_chat,
         type="messages",
