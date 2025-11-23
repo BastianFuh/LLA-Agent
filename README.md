@@ -5,7 +5,7 @@ LLA-Agent is an AI-powered platform designed to assist language learners by auto
 
 ## Overview
 
-The platform utilizes function-calling agents to iteratively construct questions. Instead of manually parsing LLM (Large Language Model) output, the system leverages structured function calls, which enhances robustness and allows for correction at each stage of question generation. The relevant question data is accumulated across multiple steps and presented via the GUI.
+The platform utilizes function-calling agents to iteratively construct questions. Instead of manually parsing LLM (Large Language Model) output, the system uses function calls to iteratively build the question, accumulating the question data at each step and presenting it via the GUI.
 
 Evaluation is handled in two ways:
 
@@ -17,18 +17,17 @@ Evaluation is handled in two ways:
 
 ### Supported question types:
 
-- Multiple Choice  
-- Fill-in-the-Blank  
-- Translation (with chatbot-based evaluation)  
-- Reading Comprehension (with chatbot-based evaluation)
-- Listening Comprehension 
+- Objective Questions
+  - Multiple Choice  
+  - Fill-in-the-Blank  
+- Open-ended Questions
+  - Translation
+  - Reading Comprehension
+  - Listening Comprehension 
 
 ### Additional capabilities:
 
-- Optional audio input and output for:
-  - Translation
-  - Reading Comprehension
-
+- Optional audio input and output
 
 ### Model support:
 
@@ -36,7 +35,7 @@ Evaluation is handled in two ways:
   - **OpenAI** (API)
   - **DeepSeek** (API)
   - **Ollama**, Function calling models (local)
-    > ⚠️ Initial testing indicates that smaller models may struggle to follow instructions reliably. Further evaluation with newer or larger models is recommended.
+    > ⚠️ Initial testing indicates that smaller models may struggle to follow instructions reliably. Further evaluation with newer or larger models is nedded.
 
 - **Text to Speech**
   - **Kokoro** (Local)
@@ -47,19 +46,24 @@ Evaluation is handled in two ways:
     - Subscription-based pricing:
       - Usage-based billing is unlocked at higher subscription tiers.
       - Relatively expensive
-  - **Fish Audio** (Local, **Recommended**)
+  - **Fish Audio** (Local)
     - Local use via [Fish Speech](https://github.com/fishaudio/fish-speech)
+    - Requires a seperate server for generating voices
     - Performs well even on modest hardware (e.g., tested on *RTX 4060 Ti*)
     - Supports custom voices via simple file drop:
       - Add an `.mp3` or `.wav` file to the `voice_reference` folder
       - Custom voices showed better quality in testing
     - Potential future support for API-based voices:
       - Current API pricing appears reasonable
-
+  - **Chatterbox** (Local, **Recommended**)
+    - Performs well even on modest hardware (e.g., tested on *RTX 4060 Ti*)
+    - Supports custom voices
+    - Does not require an additional server
+    
 ## Currently planned features
 
-- **Listening Comprehension**: Focused on conversational texts
-
+- Explanation Questions, for example, for explaining the grammar used in sentences
+- Sentence Segmentation Rearrangement
 
 
 ## Getting Started
